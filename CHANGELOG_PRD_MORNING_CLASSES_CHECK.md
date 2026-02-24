@@ -1,5 +1,25 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.46 - 24 فبراير 2026
+
+### الملخص
+ربط اختبار تنظيف cache داخل Workflow الإلزامي `Release Gate` لضمان منع regression على سلوك `--clean-acceptance-cache`.
+
+### أهم التغييرات
+1. تحديث:
+   - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+2. داخل CI:
+   - إضافة تثبيت:
+     - `pytest`
+   - إضافة خطوة:
+     - `Cleanup Cache Regression Test`
+     - وتشغّل:
+       - `python -m pytest -q backend/tests/test_release_with_gate_cleanup.py`
+
+### الأثر على التنفيذ
+1. اختبار سلوك التنظيف أصبح Gate رسميًا قبل نجاح الـPR.
+2. اكتشاف مبكر لأي كسر في حذف الملفات المستهدفة أو حذف ملفات الإثبات الأساسية بالخطأ.
+
 ## v1.45 - 24 فبراير 2026
 
 ### الملخص
