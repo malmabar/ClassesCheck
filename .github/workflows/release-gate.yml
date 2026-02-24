@@ -61,6 +61,10 @@ jobs:
         run: |
           python -m pytest -q backend/tests/test_release_with_gate_cleanup.py
 
+      - name: Release Script Syntax Check
+        run: |
+          bash -n scripts/release_with_gate.sh
+
       - name: Wait For Postgres
         run: |
           python - <<'PY'

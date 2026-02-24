@@ -655,3 +655,18 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
 3. النتيجة التشغيلية:
    - اختبار سلوك `--clean-acceptance-cache` أصبح جزءًا إلزاميًا من workflow.
    - فشل الاختبار يوقف `Mandatory Release Gate` قبل متابعة خطوات قاعدة البيانات وتشغيل السكربت.
+
+## 29) إضافة فحص Bash Syntax لسكربت الإصدار داخل CI (تم)
+
+1. ما تم تعديله:
+   - ملف:
+     - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+2. التغيير:
+   - إضافة خطوة:
+     - `Release Script Syntax Check`
+   - التنفيذ:
+     - `bash -n scripts/release_with_gate.sh`
+3. مكانها في التسلسل:
+   - بعد اختبار `Cleanup Cache Regression Test` وقبل `Wait For Postgres`.
+4. النتيجة:
+   - أي خطأ تركيبي في سكربت الإصدار يفشل الـworkflow مبكرًا (fail-fast) قبل تشغيل خدمات DB/API.
