@@ -1,5 +1,24 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.43 - 24 فبراير 2026
+
+### الملخص
+تنظيف دائم لضوضاء `artifacts/acceptance` من Git عبر تجاهل المسار وإيقاف تتبع ملفاته التشغيلية.
+
+### أهم التغييرات
+1. تحديث:
+   - `/Users/malmabar/Documents/MornningClassesCheck/.gitignore`
+2. إضافة قاعدة:
+   - `artifacts/acceptance/`
+3. إزالة تتبع الملفات الحالية تحت المسار:
+   - `git rm -r --cached artifacts/acceptance`
+   - مع الإبقاء على الملفات محليًا.
+
+### الأثر على التنفيذ
+1. منع اتساخ `git status` بعد كل تشغيل gate.
+2. تقليل الضوضاء في PRs والتركيز على تغييرات الكود الفعلية.
+3. استمرار عمل CI/Gate بدون تغيير لأن artifacts تُنتج وتُرفع من filesystem.
+
 ## v1.42 - 24 فبراير 2026
 
 ### الملخص
