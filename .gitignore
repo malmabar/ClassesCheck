@@ -1,0 +1,9 @@
+.DS_Store
+.env.mc
+.pycache/
+__pycache__/
+.venv/
+artifacts/screenshots/
+artifacts/exports/
+artifacts/parity/
+backend/artifacts/parity/

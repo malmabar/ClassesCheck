@@ -1,0 +1,24 @@
+{
+  "generated_at_utc": "2026-02-24T08:24:09.412068+00:00",
+  "release_ready": true,
+  "gate": "acceptance_gate",
+  "acceptance_report_file": "/Users/malmabar/Documents/MornningClassesCheck/artifacts/acceptance/latest.json",
+  "acceptance_overall_status": "PASSED",
+  "period_statuses": [
+    {
+      "period": "صباحي",
+      "status": "PASSED",
+      "run_id": "58758f0e-fb38-448d-884f-e7054f556b97"
+    },
+    {
+      "period": "مسائي",
+      "status": "PASSED",
+      "run_id": "dad7d861-c254-4300-a285-2b316fc8a3fb"
+    }
+  ],
+  "health_payload": {
+    "status": "ok",
+    "service": "Morning Classes Check API",
+    "environment": "development"
+  }
+}

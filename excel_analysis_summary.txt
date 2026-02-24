@@ -1,0 +1,77 @@
+Workbook: MorningClassesCheck - Beta6.xlsm
+Sheets: 14 | VBA: True | CalcChain entries: 387391
+Defined names: 97
+
+Top formula functions (global):
+- VALUE: 509898
+- AND: 250220
+- IF: 214436
+- SUMIFS: 198044
+- IFERROR: 113451
+- INDEX: 77923
+- MATCH: 77923
+- SEARCH: 41053
+- XLFN.IFS: 39993
+- ISERROR: 24995
+- OR: 20036
+- ISNUMBER: 16058
+- TEXT: 9998
+- LEFT: 5998
+- RIGHT: 5998
+- SUM: 4765
+- COUNTIFS: 2510
+- TRIM: 1998
+- SUBSTITUTE: 1998
+- REPT: 1998
+
+Cross-sheet references (top):
+- Codes -> Time: 499900
+- CRNs -> Codes: 45450
+- Codes -> SL03-TSM: 4999
+- Rooms -> Building&Rooms: 4460
+- Rooms -> Rooms: 3122
+- TrainersSC -> Codes: 2008
+- Rooms -> Codes: 1784
+- Codes -> Codes: 17
+- Rooms -> SS01_Report: 2
+
+Per-sheet summary:
+- 2. SS01_Report [hidden] dim=A1:AE3427 non_empty=85321 formulas=0 (text=0, empty=0) values=85321 cf=0 dv=0 merges=0 draw=0
+- 3. Rooms [hidden] dim=A1:AW451 non_empty=21780 formulas=21411 (text=2977, empty=18434) values=369 cf=1 dv=0 merges=5 draw=0
+  functions: IF:37910; SUMIFS:35680; IFERROR:3122; INDEX:2230; MATCH:2230; XLFN.UNIQUE:893
+  refs: Building&Rooms:4460; Rooms:3122; Codes:1784; SS01_Report:2
+  sample: B1 -> =semester
+- 5. Codes [hidden] dim=A1:AS5001 non_empty=225016 formulas=134990 (text=55921, empty=79069) values=90026 cf=2 dv=0 merges=0 draw=0
+  functions: VALUE:509898; AND:249950; IF:99980; IFERROR:74986; XLFN.IFS:39992; SEARCH:34993
+  refs: Time:499900; SL03-TSM:4999; Codes:17
+  sample: A2 -> =IFERROR(_xlfn._xlws.FILTER(SS01_Report,SS01_HeadReport=Codes!A1),"")
+- 6. Building&Rooms [hidden] dim=A1:I778 non_empty=6986 formulas=0 (text=0, empty=0) values=6986 cf=0 dv=0 merges=0 draw=0
+- 7. Time [hidden] dim=D6:N18 non_empty=46 formulas=0 (text=0, empty=0) values=46 cf=0 dv=0 merges=2 draw=0
+- 9. Halls_Copy [visible] dim=A1:AW450 non_empty=21781 formulas=0 (text=0, empty=0) values=21781 cf=3 dv=0 merges=5 draw=0
+- 10. Homepage [visible] dim=B1:W29 non_empty=11 formulas=3 (text=3, empty=0) values=8 cf=0 dv=1 merges=7 draw=1
+  functions: NOW:2; XLFN.IFS:1; XLFN.TEXTJOIN:1
+  sample: L2 -> =NOW()
+- 11. TrainersSC [visible] dim=A1:BB2813 non_empty=26260 formulas=26108 (text=924, empty=25184) values=152 cf=9 dv=0 merges=5 draw=0
+  functions: IF:43174; SUMIFS:41164; COUNTIFS:2510; IFERROR:2010; XLFN.UNIQUE:1006; INDEX:1004
+  refs: Codes:2008
+  sample: A1 -> =semester
+- 12. SL03-TSM [hidden] dim=A1:K1000 non_empty=7664 formulas=2997 (text=57, empty=2940) values=4667 cf=0 dv=0 merges=0 draw=0
+  functions: TRIM:1998; SUBSTITUTE:1998; REPT:1998; LEFT:999; RIGHT:999
+  sample: I2 -> =TRIM(LEFT(SUBSTITUTE(C2," ",REPT(" ",100)),100))
+- 13. CRNs [hidden] dim=A1:BB3033 non_empty=160883 formulas=160596 (text=26411, empty=134185) values=287 cf=4 dv=0 merges=5 draw=0
+  functions: SUMIFS:121200; INDEX:69690; MATCH:69690; IFERROR:33332; IF:33332; ISNUMBER:6060
+  refs: Codes:45450
+  sample: B1 -> =semester
+- 14. التوزيع النسبي [visible] dim=A1:AO22 non_empty=302 formulas=201 (text=140, empty=61) values=101 cf=1 dv=0 merges=62 draw=0
+  functions: SUM:165; ROW:160; SUMPRODUCT:80; SUBTOTAL:80; OFFSET:80; MIN:80
+  sample: B1 -> =MorOREve &" "& semester
+- 15. CRNs_Copy [visible] dim=A1:BB3038 non_empty=160885 formulas=3 (text=3, empty=0) values=160882 cf=49 dv=0 merges=5 draw=0
+  functions: IFERROR:1; SUBTOTAL:1
+  sample: G1 -> =I2-H1
+- 16. TrainingPlan [hidden] dim=A1:BD2036 non_empty=95329 formulas=0 (text=0, empty=0) values=95329 cf=0 dv=0 merges=0 draw=0
+- 17. كود البناء CF [hidden] dim=A5:BL28 non_empty=125 formulas=40 (text=40, empty=0) values=85 cf=0 dv=0 merges=5 draw=0
+  functions: AND:270; COUNTIF:190; SUM:120; NOT:40; OR:40
+  sample: BE8 -> =AND($C$1="صباحي", NOT(OR(
+AND($L4=1, $M4=1, COUNTIF($L4:$AY4, 1)=2),
+AND($L4=1, $M4=1, $N4=1, $O4=1, COUNTIF($L4:$AY4, 1)=4),
+AND(SUM($L4, $M4, $AT4, $AU4) >= 

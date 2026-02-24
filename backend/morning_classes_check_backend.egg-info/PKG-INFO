@@ -1,0 +1,92 @@
+Metadata-Version: 2.4
+Name: morning-classes-check-backend
+Version: 0.1.0
+Summary: Backend API and data pipeline scaffold for Morning Classes Check
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: alembic>=1.14.0
+Requires-Dist: fastapi>=0.115.0
+Requires-Dist: psycopg[binary]>=3.2.0
+Requires-Dist: pydantic-settings>=2.7.0
+Requires-Dist: python-dotenv>=1.0.1
+Requires-Dist: python-multipart>=0.0.12
+Requires-Dist: sqlalchemy>=2.0.36
+Requires-Dist: uvicorn[standard]>=0.32.0
+Provides-Extra: dev
+Requires-Dist: httpx>=0.28.0; extra == "dev"
+Requires-Dist: playwright>=1.52.0; extra == "dev"
+Requires-Dist: pytest>=8.3.0; extra == "dev"
+Requires-Dist: ruff>=0.8.0; extra == "dev"
+Dynamic: requires-python
+
+# Morning Classes Check Backend
+
+FastAPI + SQLAlchemy + Alembic scaffold for Morning Classes Check modernization.
+
+## Quick Start
+
+1. Create and activate a virtual environment.
+2. Install dependencies:
+```bash
+pip install -e /Users/malmabar/Documents/MornningClassesCheck/backend
+```
+3. Ensure `/Users/malmabar/Documents/MornningClassesCheck/.env.mc` exists and contains the project DB settings.
+4. Run migrations:
+```bash
+alembic -c /Users/malmabar/Documents/MornningClassesCheck/backend/alembic.ini upgrade head
+```
+5. Start API:
+```bash
+uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/MornningClassesCheck/backend
+```
+
+## Initial Endpoints
+
+- `GET /health`
+- `POST /api/v1/mc/import/ss01`
+- `POST /api/v1/mc/run`
+- `POST /api/v1/mc/checks/run`
+- `GET /api/v1/mc/runs?period=صباحي|مسائي`
+- `GET /api/v1/mc/runs/{run_id}/source-ss01`
+- `GET /api/v1/mc/runs/{run_id}/codes`
+- `GET /api/v1/mc/runs/{run_id}/issues`
+
+## Web UI
+
+- `GET /` : Arabic RTL dashboard for runs/codes/issues with global period filter.
+- Static UI assets are served from `GET /ui/...`:
+  - `/ui/styles/tokens.css`
+  - `/ui/styles/components.css`
+  - `/ui/scripts/dashboard.js`
+
+## UI Visual Snapshots (Automation)
+
+Generate repeatable screenshots for visual regression checks.
+
+1. Install dev dependencies and browser (once):
+```bash
+source /Users/malmabar/Documents/MornningClassesCheck/.venv/bin/activate
+pip install -e /Users/malmabar/Documents/MornningClassesCheck/backend[dev]
+python -m playwright install chromium
+```
+
+2. Start API:
+```bash
+uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/MornningClassesCheck/backend
+```
+
+3. Capture snapshots (without import):
+```bash
+python -m app.tools.ui_snapshots --period صباحي
+```
+
+4. Capture snapshots after importing a specific SS01 file:
+```bash
+python -m app.tools.ui_snapshots \
+  --period صباحي \
+  --semester 144620 \
+  --import-file /Users/malmabar/Desktop/TraineeConflicts/SS01.csv
+```
+
+Outputs are saved under:
+- `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/<timestamp>/`

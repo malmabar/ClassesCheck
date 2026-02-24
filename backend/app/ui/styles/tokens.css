@@ -1,0 +1,121 @@
+:root {
+  --font-family-ar: "IBM Plex Sans Arabic", "Tajawal", "Segoe UI", Tahoma, Arial, sans-serif;
+  --font-family-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+  --space-9: 2.5rem;
+
+  --radius: 16px;
+  --radiusSm: 12px;
+
+  --fs-h1: clamp(1.875rem, 2.7vw, 2.25rem); /* 30-36 */
+  --fs-h2: clamp(1.125rem, 1.8vw, 1.375rem); /* 18-22 */
+  --fs-section: clamp(0.9375rem, 1.2vw, 1rem); /* 15-16 */
+  --fs-body: 0.9375rem; /* 15 */
+  --fs-muted: 0.8125rem; /* 13 */
+  --fs-chip: 0.72rem;
+
+  --lh-tight: 1.45;
+  --lh-normal: 1.6;
+  --lh-loose: 1.7;
+
+  --ease-standard: 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-slow: 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+:root[data-theme="dark"] {
+  --bg: #0B1220;
+  --bg2: #070B14;
+  --panel: rgba(255,255,255,0.08);
+  --panel2: rgba(255,255,255,0.06);
+  --panelBorder: rgba(255,255,255,0.12);
+  --text: #EAF0FF;
+  --muted: #A9B4C7;
+  --primary: #17C964;
+  --primaryHover: #0EA75A;
+  --accent: #D7DFEA;
+  --danger: #FF4D4F;
+  --warning: #F7B731;
+  --info: #3B82F6;
+  --shadow: 0 12px 40px rgba(0,0,0,0.35);
+  --shadowSoft: 0 8px 24px rgba(0,0,0,0.25);
+  --radius: 16px;
+  --radiusSm: 12px;
+  --glassBlur: 14px;
+  --ring: rgba(23,201,100,0.35);
+  --gridline: rgba(255,255,255,0.08);
+
+  --bgGlowA: rgba(23,201,100,0.10);
+  --bgGlowB: rgba(59,130,246,0.10);
+  --panelSolid: #101a2b;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #F6F8FC;
+  --bg2: #EEF3FA;
+  --panel: rgba(255,255,255,0.72);
+  --panel2: rgba(255,255,255,0.60);
+  --panelBorder: rgba(10,20,40,0.10);
+  --text: #0B1220;
+  --muted: #42526B;
+  --primary: #0FB15D;
+  --primaryHover: #0A8F4B;
+  --accent: #0B1220;
+  --danger: #D92D20;
+  --warning: #B88210;
+  --info: #2563EB;
+  --shadow: 0 14px 36px rgba(16,24,40,0.12);
+  --shadowSoft: 0 8px 20px rgba(16,24,40,0.10);
+  --radius: 16px;
+  --radiusSm: 12px;
+  --glassBlur: 10px;
+  --ring: rgba(15,177,93,0.28);
+  --gridline: rgba(10,20,40,0.08);
+
+  --bgGlowA: rgba(15,177,93,0.10);
+  --bgGlowB: rgba(37,99,235,0.08);
+  --panelSolid: #ffffff;
+  color-scheme: light;
+}
+
+:root[data-density="compact"] {
+  --heroPadY: 1rem;
+  --heroPadX: 1.25rem;
+  --layoutGap: 0.875rem;
+  --cardPad: 0.875rem;
+  --cardPadSm: 0.75rem;
+  --kpiPad: 0.75rem;
+  --kpiMinH: 94px;
+  --controlH: 2.5rem;
+  --iconBtn: 2.1rem;
+  --chipH: 1.45rem;
+  --tableCellPY: 0.45rem;
+  --tableCellPX: 0.6rem;
+  --tableHeadPY: 0.52rem;
+  --tableHeadPX: 0.6rem;
+}
+
+:root[data-density="comfortable"] {
+  --heroPadY: 1.2rem;
+  --heroPadX: 1.45rem;
+  --layoutGap: 1rem;
+  --cardPad: 1rem;
+  --cardPadSm: 0.875rem;
+  --kpiPad: 0.9rem;
+  --kpiMinH: 110px;
+  --controlH: 2.75rem;
+  --iconBtn: 2.25rem;
+  --chipH: 1.6rem;
+  --tableCellPY: 0.56rem;
+  --tableCellPX: 0.72rem;
+  --tableHeadPY: 0.62rem;
+  --tableHeadPX: 0.72rem;
+}

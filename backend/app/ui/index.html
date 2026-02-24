@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="dark" data-density="compact">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>فحص الشعب الصباحية</title>
+    <meta
+      name="description"
+      content="لوحة تشغيل وتحليل الشعب الدراسية مع عرض الملاحظات والتحميلات في تصميم حكومي حديث." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap"
+      rel="stylesheet" />
+    <link rel="stylesheet" href="/ui/styles/tokens.css" />
+    <link rel="stylesheet" href="/ui/styles/components.css" />
+    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="/ui/scripts/dashboard.js"></script>
+  </head>
+  <body>
+    <div class="app-bg" aria-hidden="true"></div>
+
+    <div class="shell">
+      <header class="hero glass-card">
+        <div class="hero-top-grid">
+          <div class="header-left-slot">
+            <div class="status-chip" aria-live="polite">
+              <span id="healthDot" class="status-dot"></span>
+              <span id="healthText">جاري فحص الخدمة...</span>
+            </div>
+            <div class="header-switches">
+              <button id="themeToggle" class="btn btn-chip" type="button" aria-label="تبديل الثيم" title="تبديل الثيم">
+                <i data-lucide="sun-moon" class="icon" aria-hidden="true"></i>
+                <span id="themeText">داكن</span>
+              </button>
+              <button id="densityToggle" class="btn btn-chip" type="button" aria-label="تبديل كثافة العرض" title="تبديل كثافة العرض">
+                <i data-lucide="panel-top-close" class="icon" aria-hidden="true"></i>
+                <span id="densityText">مضغوط</span>
+              </button>
+            </div>
+          </div>
+          <div class="header-center-slot" aria-hidden="true"></div>
+          <div class="header-right-slot">
+            <p class="eyebrow">
+              <i data-lucide="shield-check" class="icon" aria-hidden="true"></i>
+              منصة تشغيل الجداول
+            </p>
+            <h1 class="hero-title">فحص الشعب الصباحية</h1>
+            <p class="hero-subtitle">
+              مركز موحد للتشغيلات، التحقق، ومراجعة نتائج الشعب بصيغة حكومية حديثة وسريعة.
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <main class="bento-grid">
+        <section class="bento-card selected-run glass-card">
+          <div class="section-head section-head--run">
+            <div>
+              <h2>التشغيل المحدد</h2>
+              <p id="selectedRunText">لم يتم اختيار تشغيل.</p>
+              <p id="selectedRunMeta" class="section-meta">آخر تحديث: --</p>
+            </div>
+            <button id="toggleControlsPanel" class="btn btn-chip btn-panel-toggle" type="button" aria-label="إخفاء لوحة التحكم" title="إخفاء لوحة التحكم">
+              <i data-lucide="panel-right-close" class="icon" aria-hidden="true"></i>
+              <span id="toggleControlsText">إخفاء التحكم</span>
+            </button>
+          </div>
+
+          <div class="stats-grid" aria-label="مؤشرات التشغيل">
+            <article class="stat-card">
+              <div class="stat-label">
+                <i data-lucide="book-open-text" class="icon" aria-hidden="true"></i>
+                الشعب
+              </div>
+              <div id="codesCount" class="stat-value">-</div>
+              <small class="stat-sub">عدد الشعب المولدة</small>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-label">
+                <i data-lucide="triangle-alert" class="icon" aria-hidden="true"></i>
+                الملاحظات
+              </div>
+              <div id="issuesCount" class="stat-value">-</div>
+              <small class="stat-sub">نتائج الفحوصات</small>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-label">
+                <i data-lucide="activity" class="icon" aria-hidden="true"></i>
+                حالة التشغيل
+              </div>
+              <div id="runStatus" class="stat-value">-</div>
+              <small class="stat-sub">حالة دورة التشغيل</small>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-label">
+                <i data-lucide="calendar-days" class="icon" aria-hidden="true"></i>
+                الفترة
+              </div>
+              <div id="runPeriod" class="stat-value">-</div>
+              <small class="stat-sub">صباحي/مسائي</small>
+            </article>
+          </div>
+
+          <section class="screens-card glass-soft" aria-label="شاشات العرض الحراري">
+            <div class="screens-head">
+              <h3 class="icon-inline">
+                <i data-lucide="table-properties" class="icon" aria-hidden="true"></i>
+                شاشات العرض الحراري
+              </h3>
+              <div class="screen-filters">
+                <label class="field field-inline" for="heatmapPeriodFilter">
+                  <span>فلتر الفترة</span>
+                  <select id="heatmapPeriodFilter" aria-label="فلتر فترة الهِيت ماب">
+                    <option value="صباحي">صباحي</option>
+                    <option value="مسائي">مسائي</option>
+                  </select>
+                </label>
+                <label class="field field-inline" for="heatmapOccupancyFilter">
+                  <span>فلتر الإشغال</span>
+                  <select id="heatmapOccupancyFilter" aria-label="فلتر الإشغال">
+                    <option value="all">الكل</option>
+                    <option value="occupied">مشغول فقط</option>
+                    <option value="empty">فارغ فقط</option>
+                    <option value="conflict">متعارض فقط</option>
+                  </select>
+                </label>
+                <label class="field field-inline" for="heatmapSearchFilter">
+                  <span>بحث الكيان</span>
+                  <input
+                    id="heatmapSearchFilter"
+                    type="search"
+                    placeholder="قاعة/شعبة/مدرب..."
+                    aria-label="بحث في صفوف الهِيت ماب" />
+                </label>
+              </div>
+            </div>
+
+            <div class="screen-tabs" role="tablist" aria-label="تبويبات الشاشات">
+              <button class="screen-tab active" type="button" data-screen="rooms" role="tab" aria-selected="true">
+                القاعات
+              </button>
+              <button class="screen-tab" type="button" data-screen="crns" role="tab" aria-selected="false">
+                الشعب
+              </button>
+              <button class="screen-tab" type="button" data-screen="trainers" role="tab" aria-selected="false">
+                المدربين
+              </button>
+              <button class="screen-tab" type="button" data-screen="distribution" role="tab" aria-selected="false">
+                التوزيع النسبي
+              </button>
+            </div>
+
+            <div class="screen-panels">
+              <section id="screenRooms" class="screen-panel active" data-screen-panel="rooms" role="tabpanel">
+                <div id="roomsSummary" class="screen-summary"></div>
+                <div id="roomsHeatmapWrap" class="heatmap-wrap"></div>
+              </section>
+
+              <section id="screenCrns" class="screen-panel" data-screen-panel="crns" role="tabpanel" hidden>
+                <div id="crnsSummary" class="screen-summary"></div>
+                <div id="crnsHeatmapWrap" class="heatmap-wrap"></div>
+              </section>
+
+              <section id="screenTrainers" class="screen-panel" data-screen-panel="trainers" role="tabpanel" hidden>
+                <div id="trainersSummary" class="screen-summary"></div>
+                <div id="trainersHeatmapWrap" class="heatmap-wrap"></div>
+              </section>
+
+              <section id="screenDistribution" class="screen-panel" data-screen-panel="distribution" role="tabpanel" hidden>
+                <div id="distributionSummary" class="screen-summary"></div>
+                <div id="distributionHeatmapWrap" class="heatmap-wrap"></div>
+              </section>
+            </div>
+          </section>
+
+          <div class="tables-grid">
+            <section class="table-card glass-soft" aria-label="جدول الملاحظات">
+              <div class="table-head">
+                <h3 class="icon-inline">
+                  <i data-lucide="clipboard-list" class="icon" aria-hidden="true"></i>
+                  الملاحظات
+                </h3>
+              </div>
+
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>المعرّف</th>
+                      <th>القاعدة</th>
+                      <th>الشدة</th>
+                      <th>الرسالة</th>
+                    </tr>
+                  </thead>
+                  <tbody id="issuesBody"></tbody>
+                </table>
+
+                <div id="issuesEmpty" class="empty-state">
+                  <i data-lucide="badge-check" aria-hidden="true"></i>
+                  <p>لا توجد ملاحظات على التشغيل.</p>
+                  <small>يمكنك تشغيل الفحوصات للتحقق من التعارضات.</small>
+                </div>
+              </div>
+            </section>
+
+            <section class="table-card glass-soft" aria-label="جدول الشعب">
+              <div class="table-head">
+                <h3 class="icon-inline">
+                  <i data-lucide="layout-grid" class="icon" aria-hidden="true"></i>
+                  الشعب
+                </h3>
+              </div>
+
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>المعرّف</th>
+                      <th>الرقم المرجعي</th>
+                      <th>اليوم</th>
+                      <th>الوقت</th>
+                      <th>القاعة</th>
+                      <th>المدرب</th>
+                    </tr>
+                  </thead>
+                  <tbody id="codesBody"></tbody>
+                </table>
+
+                <div id="codesEmpty" class="empty-state">
+                  <i data-lucide="inbox" aria-hidden="true"></i>
+                  <p>لا توجد شعب ضمن التشغيل الحالي.</p>
+                  <small>نفّذ المعالجة أو غيّر الفلتر الرئيسي للفترة.</small>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <aside class="bento-card controls-panel glass-card">
+          <div class="section-head section-head--control">
+            <div>
+              <h2>التحكم بالتشغيلات</h2>
+              <p>فلاتر، إجراءات، استجابة النظام، وقائمة التشغيلات.</p>
+            </div>
+          </div>
+
+          <label class="field" for="globalPeriod">
+            <span class="icon-inline">
+              <i data-lucide="sun-moon" class="icon" aria-hidden="true"></i>
+              فلتر الفترة الرئيسي
+            </span>
+            <select id="globalPeriod" aria-label="فلتر الفترة الرئيسي">
+              <option value="صباحي">صباحي</option>
+              <option value="مسائي">مسائي</option>
+            </select>
+          </label>
+
+          <label class="field" for="createdBy">
+            <span class="icon-inline">
+              <i data-lucide="user-cog" class="icon" aria-hidden="true"></i>
+              منفّذ العملية
+            </span>
+            <input id="createdBy" value="واجهة-ويب" />
+          </label>
+
+          <section class="import-card glass-soft" aria-label="استيراد تقرير SS01">
+            <h3 class="icon-inline">
+              <i data-lucide="file-up" class="icon" aria-hidden="true"></i>
+              استيراد التقرير الجديد
+            </h3>
+
+            <label class="field" for="importSemester">
+              <span>الفصل</span>
+              <input id="importSemester" placeholder="مثال: 1446-2" />
+            </label>
+
+            <label class="field" for="importPeriod">
+              <span>الفترة</span>
+              <select id="importPeriod" aria-label="فترة الاستيراد">
+                <option value="صباحي">صباحي</option>
+                <option value="مسائي">مسائي</option>
+              </select>
+            </label>
+
+            <label class="field" for="importFile">
+              <span>ملف SS01 (CSV)</span>
+              <input id="importFile" type="file" accept=".csv,text/csv" />
+            </label>
+
+            <button id="importSs01" class="btn btn-secondary" type="button">
+              <i data-lucide="upload-cloud" class="icon" aria-hidden="true"></i>
+              استيراد التقرير
+            </button>
+          </section>
+
+          <div class="btn-grid">
+            <button id="refreshRuns" class="btn btn-ghost" type="button">
+              <i data-lucide="refresh-cw" class="icon" aria-hidden="true"></i>
+              تحديث التشغيلات
+            </button>
+
+            <button id="refreshSelected" class="btn btn-ghost" type="button">
+              <i data-lucide="refresh-ccw" class="icon" aria-hidden="true"></i>
+              تحديث المحدد
+            </button>
+
+            <button id="runPipeline" class="btn btn-primary" type="button">
+              <i data-lucide="play" class="icon" aria-hidden="true"></i>
+              تشغيل المعالجة
+            </button>
+
+            <button id="runChecks" class="btn btn-secondary" type="button">
+              <i data-lucide="shield-alert" class="icon" aria-hidden="true"></i>
+              تشغيل الفحوصات
+            </button>
+
+            <button id="publishRun" class="btn btn-secondary" type="button">
+              <i data-lucide="send" class="icon" aria-hidden="true"></i>
+              نشر النتائج
+            </button>
+
+            <button id="exportXlsx" class="btn btn-ghost" type="button">
+              <i data-lucide="file-spreadsheet" class="icon" aria-hidden="true"></i>
+              تصدير Excel
+            </button>
+
+            <button id="exportPdf" class="btn btn-ghost" type="button">
+              <i data-lucide="file-text" class="icon" aria-hidden="true"></i>
+              تصدير PDF
+            </button>
+          </div>
+
+          <section class="response-card" aria-label="استجابة النظام">
+            <div class="response-head">
+              <h3 class="icon-inline">
+                <i data-lucide="file-json" class="icon" aria-hidden="true"></i>
+                استجابة النظام
+              </h3>
+              <div class="response-meta">
+                <span id="resultState" class="state-pill state-pill--warn">بانتظار</span>
+                <span id="resultTime" class="console-time">--:--</span>
+              </div>
+              <div class="response-actions">
+                <button id="copyResult" class="btn btn-icon" type="button" aria-label="نسخ الاستجابة" title="نسخ الاستجابة">
+                  <i data-lucide="copy" class="icon" aria-hidden="true"></i>
+                </button>
+                <button id="toggleResult" class="btn btn-icon" type="button" aria-label="طي أو توسيع" title="طي أو توسيع">
+                  <i data-lucide="chevrons-up-down" class="icon" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+            <pre id="result" class="result">لا يوجد إجراء بعد.</pre>
+          </section>
+
+          <section class="runs-section" aria-label="قائمة التشغيلات">
+            <h3 class="icon-inline">
+              <i data-lucide="layers-3" class="icon" aria-hidden="true"></i>
+              قائمة التشغيلات
+            </h3>
+            <div id="runList" class="run-list"></div>
+          </section>
+        </aside>
+      </main>
+    </div>
+  </body>
+</html>
