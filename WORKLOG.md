@@ -1025,3 +1025,19 @@
    - `Install Backend` -> `Cleanup Cache Regression Test` -> بقية خطوات gate (DB + API + release script).
 4. الأثر:
    - أي كسر مستقبلي في سلوك التنظيف سيوقف الـPR مبكرًا قبل إكمال مسار الإصدار.
+
+### [W-052] إضافة فحص Syntax إلزامي لسكربت الإصدار في CI
+1. الهدف:
+   - كشف أخطاء Bash التركيبية في `release_with_gate.sh` مبكرًا قبل تشغيل خدمات قاعدة البيانات والـAPI داخل CI.
+2. التعديل المنفذ:
+   - تحديث:
+     - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+   - إضافة خطوة جديدة:
+     - `Release Script Syntax Check`
+     - تنفذ:
+       - `bash -n scripts/release_with_gate.sh`
+3. ترتيب التنفيذ:
+   - `Install Backend` -> `Cleanup Cache Regression Test` -> `Release Script Syntax Check` -> `Wait For Postgres` -> بقية الـGate.
+4. الأثر:
+   - فشل سريع (fail-fast) إذا دخل خطأ تركيبي على سكربت الإصدار.
+   - تقليل استهلاك وقت CI على خطوات البنية التحتية عند وجود خطأ Bash مباشر.

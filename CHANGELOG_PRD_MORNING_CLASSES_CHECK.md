@@ -1,5 +1,25 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.47 - 24 فبراير 2026
+
+### الملخص
+إضافة فحص تركيبي إلزامي (`bash -n`) لسكربت الإصدار داخل `Release Gate` لتحسين fail-fast في CI.
+
+### أهم التغييرات
+1. تحديث:
+   - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+2. إضافة خطوة CI جديدة:
+   - `Release Script Syntax Check`
+   - تنفذ:
+     - `bash -n scripts/release_with_gate.sh`
+3. موضع التنفيذ:
+   - بعد اختبار `Cleanup Cache Regression Test`
+   - قبل خطوات PostgreSQL/المهاجرات/تشغيل API.
+
+### الأثر على التنفيذ
+1. اكتشاف أسرع لأخطاء Bash في سكربت الإصدار.
+2. تقليل هدر وقت CI الناتج عن تشغيل الخدمات قبل اكتشاف خطأ تركيبي بسيط.
+
 ## v1.46 - 24 فبراير 2026
 
 ### الملخص
