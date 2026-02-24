@@ -739,3 +739,20 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
      - نجح مرة أخرى (no-op).
 5. الأثر:
    - تحسين تحمل الـmigration أمام drift التاريخي في قواعد بيانات قائمة.
+
+## 33) فحص CI لإعادة تشغيل المهاجرات (Idempotency) (تم)
+
+1. ما تم تعديله:
+   - ملف:
+     - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+2. التغيير:
+   - إضافة خطوة:
+     - `Re-run Migrations Idempotency Check`
+   - وتشغّل:
+     - `python -m alembic -c alembic.ini upgrade head`
+3. مكانها:
+   - بعد خطوة `Run Migrations` مباشرة.
+4. الهدف التشغيلي:
+   - التأكد أن إعادة تنفيذ المهاجرات في نفس البيئة لا ينتج أخطاء (no-op behavior).
+5. الأثر:
+   - أي regression في idempotency سيوقف `Mandatory Release Gate` مبكرًا.

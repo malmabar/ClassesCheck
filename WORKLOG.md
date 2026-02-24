@@ -1137,3 +1137,19 @@
 5. الأثر:
    - تقليل هشاشة تشغيل migrations على البيئات المحلية التي حصل فيها drift سابق.
    - جعل 0004 أكثر أمانًا تشغيلًا في سيناريوهات الاستعادة/الاستيراد.
+
+### [W-056] إضافة فحص Idempotency للمهاجرات داخل CI
+1. الهدف:
+   - ضمان أن مسار المهاجرات في CI يبقى آمنًا عند إعادة التشغيل ولا يرجع لأخطاء drift/`DuplicateTable`.
+2. التعديل المنفذ:
+   - تحديث:
+     - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+   - إضافة خطوة جديدة بعد `Run Migrations`:
+     - `Re-run Migrations Idempotency Check`
+     - تنفذ:
+       - `python -m alembic -c alembic.ini upgrade head`
+3. المنطق:
+   - التشغيل الأول يطبق المهاجرات.
+   - التشغيل الثاني يؤكد أنها no-op وآمنة لإعادة التنفيذ.
+4. الأثر:
+   - اكتشاف مبكر لأي migration غير idempotent في PR قبل الوصول لمراحل API/Gate.
