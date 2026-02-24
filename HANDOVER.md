@@ -521,3 +521,31 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
      - `required_approving_review_count=1`
      - `required_conversation_resolution=true`
      - force push/delete: `disabled`
+
+## 23) تحصين مسارات Publish/Export ضد 500 الغامض (تم)
+
+1. البلاغ:
+   - واجهة التشغيل عرضت فشلًا في:
+     - `نشر النتائج`
+     - `تصدير Excel`
+     - `تصدير PDF`
+   - مع رسائل `HTTP 500 / Internal Server Error`.
+2. نتيجة إعادة الإنتاج:
+   - بإعادة الاختبار على التشغيلات الحديثة + تشغيلات تاريخية + ملف:
+     - `/Users/malmabar/Desktop/TraineeConflicts/SS01.csv`
+   - مسار `import -> pipeline -> checks -> publish -> export` عاد بنتائج `200`.
+   - التشغيلات غير الجاهزة أعادت `400` صحيحًا (precondition).
+3. التحصين المطبق:
+   - ملف:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/api/routes/runs.py`
+   - إضافة `rollback` واضح عند أخطاء:
+     - `SQLAlchemyError`
+     - `OSError`
+   - إضافة `except Exception` عام في endpoints:
+     - `POST /runs/{run_id}/publish`
+     - `GET /runs/{run_id}/export.xlsx`
+     - `GET /runs/{run_id}/export.pdf`
+   - الرسائل أصبحت تعيد سببًا واضحًا بدل `Internal Server Error` العام.
+4. الحالة التشغيلية الحالية:
+   - العمليات الثلاث تعمل على التشغيلات الجاهزة.
+   - في حال وقوع خطأ غير متوقع لاحقًا، سيظهر نوعه ورسالة أدق لتسريع المعالجة.
