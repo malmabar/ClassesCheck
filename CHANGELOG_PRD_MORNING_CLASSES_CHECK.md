@@ -1,5 +1,35 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.50 - 24 فبراير 2026
+
+### الملخص
+تحصين migration `20260224_0004` لتجنب فشل `DuplicateTable` عند وجود جداول مسبقة في بيئات حصل فيها drift تاريخي.
+
+### أهم التغييرات
+1. تحديث:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/alembic/versions/20260224_0004_create_mc_publish_and_output_artifacts.py`
+2. إضافة منطق idempotent:
+   - فحص وجود الجداول والفهارس قبل الإنشاء (`upgrade`).
+   - فحص الوجود قبل الحذف (`downgrade`).
+3. توابع مساعدة جديدة:
+   - `_table_exists`
+   - `_index_exists`
+   - `_create_index_if_missing`
+   - `_drop_index_if_exists`
+   - `_drop_table_if_exists`
+
+### التحقق
+1. فحص تركيبي للملف (syntax parse): ناجح.
+2. تنفيذ:
+   - `.venv/bin/python -m alembic -c backend/alembic.ini upgrade head`
+   - النتيجة: نجاح بدون خطأ `DuplicateTable`.
+3. إعادة تنفيذ نفس الأمر:
+   - بقي ناجحًا (no-op).
+
+### الأثر على التنفيذ
+1. تقليل انقطاعات التشغيل المحلية الناتجة عن عدم اتساق سجل Alembic مع حالة الجداول.
+2. رفع موثوقية ترقية القاعدة في بيئات قائمة.
+
 ## v1.49 - 24 فبراير 2026
 
 ### الملخص

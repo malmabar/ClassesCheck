@@ -717,3 +717,25 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
      - `total_issues=221` (`trainer=216`, `room=0`, `capacity=5`)
 5. النتيجة:
    - العدّ الحالي أكثر اتزانًا تشغيليًا من نموذج الأزواج التركيبي.
+
+## 32) تحصين Migration 0004 ضد `DuplicateTable` (تم)
+
+1. البلاغ:
+   - `alembic upgrade head` كان يفشل على بيئة محلية برسالة:
+     - `relation "mc_run_output_artifact" already exists`
+2. الملف المعدّل:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/alembic/versions/20260224_0004_create_mc_publish_and_output_artifacts.py`
+3. ما تغير:
+   - إضافة فحوصات وجود للجداول/الفهارس باستخدام `sa.inspect`.
+   - إنشاء مشروط للفهارس والجداول في `upgrade`.
+   - حذف مشروط للفهارس والجداول في `downgrade`.
+4. التحقق:
+   - Syntax parse للملف: ناجح.
+   - تنفيذ:
+     - `.venv/bin/python -m alembic -c backend/alembic.ini upgrade head`
+   - النتيجة:
+     - نجح بدون `DuplicateTable`.
+   - إعادة تنفيذ نفس الأمر:
+     - نجح مرة أخرى (no-op).
+5. الأثر:
+   - تحسين تحمل الـmigration أمام drift التاريخي في قواعد بيانات قائمة.

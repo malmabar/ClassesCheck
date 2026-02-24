@@ -1104,3 +1104,36 @@
      - `capacity_exceeded: 5`
 6. الأثر:
    - الأرقام أصبحت أقل تضخمًا وأكثر قابلية للمراجعة التشغيلية.
+
+### [W-055] تحصين Alembic migration 0004 ضد `DuplicateTable`
+1. الهدف:
+   - معالجة فشل ترقية قاعدة البيانات عند وجود جداول 0004 مسبقًا مع سجل Alembic غير متزامن.
+2. المشكلة المرصودة:
+   - الأمر:
+     - `.venv/bin/python -m alembic -c backend/alembic.ini upgrade head`
+   - كان يفشل برسالة:
+     - `psycopg.errors.DuplicateTable: relation "mc_run_output_artifact" already exists`
+3. التعديل المنفذ:
+   - تحديث:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/alembic/versions/20260224_0004_create_mc_publish_and_output_artifacts.py`
+   - إضافة helpers:
+     - `_table_exists`
+     - `_index_exists`
+     - `_create_index_if_missing`
+     - `_drop_index_if_exists`
+     - `_drop_table_if_exists`
+   - تحويل `upgrade` و`downgrade` إلى سلوك idempotent:
+     - إنشاء مشروط للجداول/الفهارس إذا كانت غير موجودة.
+     - حذف مشروط في downgrade إذا كانت موجودة.
+4. التحقق:
+   - فحص syntax:
+     - `ast.parse(...)` للملف.
+   - تشغيل:
+     - `.venv/bin/python -m alembic -c backend/alembic.ini upgrade head`
+   - النتيجة:
+     - نجح بدون `DuplicateTable`.
+   - إعادة التشغيل لنفس الأمر:
+     - بقيت النتيجة ناجحة (لا ترقية إضافية).
+5. الأثر:
+   - تقليل هشاشة تشغيل migrations على البيئات المحلية التي حصل فيها drift سابق.
+   - جعل 0004 أكثر أمانًا تشغيلًا في سيناريوهات الاستعادة/الاستيراد.
