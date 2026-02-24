@@ -1182,3 +1182,33 @@
 5. الأثر:
    - إزالة فشل Gate غير الواقعي في مسار التشغيل الحقيقي المعتمد على `SS01.csv`.
    - الحفاظ على فحص parity مع كاش الإكسل فقط في السيناريو الذي تكون فيه المقارنة deterministic.
+
+### [W-058] تنفيذ اختبار Responsive رسمي على 13/24/27 إنش
+1. الهدف:
+   - التحقق العملي من استقرار الواجهة عبر أحجام شاشات مختلفة مع حفظ أدلة بصرية.
+2. التنفيذ:
+   - تشغيل أداة:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/ui_snapshots.py`
+   - المقاسات التي تم اختبارها:
+     - `1280x800` (13-inch)
+     - `1920x1080` (24-inch)
+     - `2560x1440` (27-inch)
+   - الفترة المستخدمة:
+     - `صباحي`
+3. المخرجات:
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_13in_20260224`
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_24in_20260224`
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_27in_20260224`
+   - لكل مقاس تم حفظ:
+     - `00_full_page.png`
+     - `01_screens_card.png`
+     - `meta.json`
+     - صور تبويبات `القاعات/الشعب/المدربين/التوزيع النسبي`.
+4. النتيجة:
+   - توليد اللقطات نجح على الأحجام الثلاثة.
+   - `meta.json` أكد المقاسات الفعلية وعدد تبويبات heatmap = `4` في كل اختبار.
+5. ملاحظة تشغيلية:
+   - الخطأ السابق كان في صياغة أمر shell فقط (تقسيم قيم في `zsh`) وليس قيدًا في الواجهة.
+   - أداة snapshots تدعم أي مقاس مباشرة عبر:
+     - `--viewport-width`
+     - `--viewport-height`

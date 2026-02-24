@@ -1,5 +1,32 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.53 - 24 فبراير 2026
+
+### الملخص
+إغلاق بند اختبار الـresponsive الرسمي عبر تشغيل بصري موثّق على 3 أحجام شاشات مرجعية (13/24/27 إنش).
+
+### أهم التغييرات
+1. تنفيذ فحص screenshots باستخدام:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/ui_snapshots.py`
+2. المقاسات المعتمدة للاختبار:
+   - `1280x800` (13-inch)
+   - `1920x1080` (24-inch)
+   - `2560x1440` (27-inch)
+3. حفظ أدلة بصرية في:
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_13in_20260224`
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_24in_20260224`
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_27in_20260224`
+
+### التحقق
+1. كل تشغيل snapshots اكتمل بنجاح.
+2. `meta.json` لكل مقاس أكد:
+   - viewport الصحيح.
+   - وجود تبويبات heatmap الأربع (`panels=4`).
+
+### الأثر على التنفيذ
+1. إغلاق مطلب responsive الرسمي في قائمة الأولويات التنفيذية.
+2. إثبات أن الواجهة وأداة الاختبار تدعمان أي مقاس شاشة عبر مدخلات viewport المباشرة.
+
 ## v1.52 - 24 فبراير 2026
 
 ### الملخص

@@ -787,3 +787,35 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
      - `excel_cache_parity.checked=false` مع سبب واضح.
 5. ملاحظة تشغيلية:
    - هذا الإصلاح لا يلغي مقارنة كاش الإكسل بالكامل؛ فقط يمنع استخدامها كـgate blocker عندما baseline ليس workbook نفسه.
+
+## 35) اختبار Responsive رسمي (13/24/27 إنش) (تم)
+
+1. الهدف:
+   - تنفيذ فحص بصري موحّد على أحجام شاشات مرجعية وإنتاج أدلة screenshots قابلة للمراجعة.
+2. التنفيذ:
+   - أداة:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/ui_snapshots.py`
+   - المقاسات:
+     - `1280x800` (13-inch)
+     - `1920x1080` (24-inch)
+     - `2560x1440` (27-inch)
+   - الفترة:
+     - `صباحي`
+3. أدلة الاختبار:
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_13in_20260224`
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_24in_20260224`
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_27in_20260224`
+   - كل مجلد يحتوي:
+     - `00_full_page.png`
+     - `01_screens_card.png`
+     - `meta.json`
+     - لقطات تبويبات heatmap الأربع.
+4. التحقق:
+   - جميع التشغيلات نجحت دون timeout.
+   - `meta.json` في كل مجلد أكد:
+     - مقاس viewport الصحيح.
+     - `panels = 4`.
+5. ملاحظة:
+   - سؤال "يدعم أي مقاس؟" تم حسمه تشغيليًا:
+     - الأداة تدعم أي مقاس عبر `--viewport-width/--viewport-height`.
+   - التعثر السابق كان خطأ أمر shell (`zsh word-splitting`) وليس خلل responsive في النظام.
