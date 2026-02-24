@@ -435,5 +435,9 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
      - `python -m alembic -c alembic.ini upgrade head`
      - داخل `working-directory: backend`
    - لتفادي أي مشاكل PATH لأمر `alembic` في runner.
+   - تبسيط DSN في CI بإزالة `options=-csearch_path...` من:
+     - `DATABASE_URL`
+     - `ALEMBIC_DATABASE_URL`
+   - لأن الموديلات/الهجرات تستخدم schema-qualified names ولا تحتاج search_path في CI.
 4. الحالة بعد الإصلاح:
    - التعديلات جاهزة للدفع، والهدف التحقق من run جديد ناجح (`success`) على GitHub Actions.

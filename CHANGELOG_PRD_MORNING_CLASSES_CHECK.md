@@ -1,5 +1,25 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.36 - 24 فبراير 2026
+
+### الملخص
+تبسيط إعداد اتصال قاعدة البيانات في CI بإزالة `search_path` query options من DSN لتقليل فشل الهجرات المبكر.
+
+### أهم التغييرات
+1. تعديل CI env في:
+   - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+2. تحديث:
+   - `DATABASE_URL`
+   - `ALEMBIC_DATABASE_URL`
+   من صيغة تحتوي:
+   - `?options=-csearch_path%3Dmc_core`
+   إلى صيغة DSN مباشرة بدون query options.
+3. الإبقاء على العزل المنطقي عبر schema-qualified names داخل migrations/models.
+
+### الأثر على التنفيذ
+1. خفض احتمالية فشل خطوة `Run Migrations` بسبب parsing/encoding في runner.
+2. تبسيط إعداد CI وجعله أكثر قابلية للتشخيص.
+
 ## v1.35 - 24 فبراير 2026
 
 ### الملخص

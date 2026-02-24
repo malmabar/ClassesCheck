@@ -37,8 +37,8 @@ jobs:
       MC_DB_PASSWORD: change_me_with_a_strong_password
       MC_DB_SCHEMA: mc_core
       MC_META_SCHEMA: mc_meta
-      DATABASE_URL: postgresql+psycopg://mc_app:change_me_with_a_strong_password@127.0.0.1:5432/morning_classes_check?options=-csearch_path%3Dmc_core
-      ALEMBIC_DATABASE_URL: postgresql+psycopg://mc_app:change_me_with_a_strong_password@127.0.0.1:5432/morning_classes_check?options=-csearch_path%3Dmc_core
+      DATABASE_URL: postgresql+psycopg://mc_app:change_me_with_a_strong_password@127.0.0.1:5432/morning_classes_check
+      ALEMBIC_DATABASE_URL: postgresql+psycopg://mc_app:change_me_with_a_strong_password@127.0.0.1:5432/morning_classes_check
       ALEMBIC_VERSION_TABLE: alembic_version_mc
       ALEMBIC_VERSION_SCHEMA: mc_meta
       PYTHONUNBUFFERED: "1"

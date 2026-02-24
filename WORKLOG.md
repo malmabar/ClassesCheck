@@ -794,6 +794,8 @@
      - `python -m alembic -c alembic.ini upgrade head`
      - مع `working-directory: backend`
    - الهدف: إزالة أي اعتماد على `alembic` binary/path ambiguity داخل GitHub runner.
+   - تبسيط `DATABASE_URL` و`ALEMBIC_DATABASE_URL` في CI بإزالة query `options=-csearch_path...`.
+   - السبب: إزالة احتمال failure مبكر مرتبط بترميز URL في بيئة GitHub Actions.
 5. التحقق المحلي:
    - `ast_ok` لملف `backend/alembic/env.py`.
    - مراجعة workflow YAML بعد التعديل.
