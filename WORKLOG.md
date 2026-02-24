@@ -790,6 +790,10 @@
    - تعديل:
      - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
    - إضافة خطوة `Wait For Postgres` عبر `psycopg.connect` retry قبل تشغيل الهجرات.
+   - تحويل تشغيل Alembic في CI إلى:
+     - `python -m alembic -c alembic.ini upgrade head`
+     - مع `working-directory: backend`
+   - الهدف: إزالة أي اعتماد على `alembic` binary/path ambiguity داخل GitHub runner.
 5. التحقق المحلي:
    - `ast_ok` لملف `backend/alembic/env.py`.
    - مراجعة workflow YAML بعد التعديل.

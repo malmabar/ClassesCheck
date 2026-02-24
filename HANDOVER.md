@@ -431,5 +431,9 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
    - ملف:
      - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
    - إضافة خطوة `Wait For Postgres` مع retry عبر `psycopg` قبل `alembic upgrade head`.
+   - وتعديل تنفيذ الهجرات ليكون:
+     - `python -m alembic -c alembic.ini upgrade head`
+     - داخل `working-directory: backend`
+   - لتفادي أي مشاكل PATH لأمر `alembic` في runner.
 4. الحالة بعد الإصلاح:
    - التعديلات جاهزة للدفع، والهدف التحقق من run جديد ناجح (`success`) على GitHub Actions.

@@ -76,7 +76,8 @@ jobs:
           PY
 
       - name: Run Migrations
-        run: alembic -c backend/alembic.ini upgrade head
+        working-directory: backend
+        run: python -m alembic -c alembic.ini upgrade head
 
       - name: Start API Server
         run: |

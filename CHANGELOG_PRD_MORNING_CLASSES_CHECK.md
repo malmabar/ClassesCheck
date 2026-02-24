@@ -1,5 +1,25 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.35 - 24 فبراير 2026
+
+### الملخص
+تعزيز إضافي لخطوة الهجرات في CI عبر تشغيل Alembic من خلال Python module مباشرة ومن داخل مجلد backend.
+
+### أهم التغييرات
+1. تحديث Workflow:
+   - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+2. تعديل خطوة الهجرات من:
+   - `alembic -c backend/alembic.ini upgrade head`
+   إلى:
+   - `python -m alembic -c alembic.ini upgrade head`
+   - مع `working-directory: backend`
+3. الهدف:
+   - إزالة احتمالية فشل PATH/entrypoint لأمر Alembic على GitHub runner.
+
+### الأثر على التنفيذ
+1. زيادة موثوقية `Run Migrations` داخل CI.
+2. تقليل احتمالات الفشل غير الواضح المرتبط ببيئة runner.
+
 ## v1.34 - 24 فبراير 2026
 
 ### الملخص
