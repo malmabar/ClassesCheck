@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from collections import defaultdict
 from datetime import datetime, timezone
+from itertools import combinations
 from typing import Dict, List, Optional, Tuple
 
 from sqlalchemy import delete, select
@@ -20,8 +21,30 @@ def _safe_text(value: Optional[str]) -> str:
     return str(value).strip()
 
 
-def _conflict_key(entity: str, key_value: str, day_order: int, slot_index: int) -> str:
-    return f"{entity}:{key_value}|day:{day_order}|slot:{slot_index}"
+def _pair_conflict_key(entity: str, key_value: str, day_order: int, left_id: int, right_id: int) -> str:
+    return f"{entity}:{key_value}|day:{day_order}|codes:{left_id}-{right_id}"
+
+
+def _collect_pair_conflicts(
+    grouped_by_slot: Dict[Tuple[str, int, int], List[MCCode]],
+) -> Dict[Tuple[str, int, int, int], List[int]]:
+    """
+    Collapse repeated slot-level overlaps into unique code pairs per entity/day.
+
+    Previous behavior counted each overlap once per slot and per code row, which
+    inflated totals for long sessions spanning multiple slots. This function keeps
+    one conflict per unique pair while preserving all overlapping slots in details.
+    """
+    pair_to_slots: Dict[Tuple[str, int, int, int], set[int]] = defaultdict(set)
+
+    for (entity_key, day_order, slot_index), grouped_codes in grouped_by_slot.items():
+        unique_ids = sorted({c.id for c in grouped_codes if c.id is not None})
+        if len(unique_ids) <= 1:
+            continue
+        for left_id, right_id in combinations(unique_ids, 2):
+            pair_to_slots[(entity_key, day_order, left_id, right_id)].add(slot_index)
+
+    return {key: sorted(slots) for key, slots in pair_to_slots.items()}
 
 
 def _add_issue(
@@ -117,6 +140,7 @@ def run_checks_for_run(db: Session, run_id: str, triggered_by: str = "api-user")
 
     trainer_groups: Dict[Tuple[str, int, int], List[MCCode]] = defaultdict(list)
     room_groups: Dict[Tuple[str, int, int], List[MCCode]] = defaultdict(list)
+    code_by_id: Dict[int, MCCode] = {c.id: c for c in codes if c.id is not None}
 
     for code in codes:
         if code.day_order is None:
@@ -142,63 +166,73 @@ def run_checks_for_run(db: Session, run_id: str, triggered_by: str = "api-user")
             if room:
                 room_groups[(room, code.day_order, slot_index)].append(code)
 
-    # Rule: a trainer cannot have more than one class in same day/slot.
-    for (trainer_job_id, day_order, slot_index), grouped_codes in trainer_groups.items():
-        if len(grouped_codes) <= 1:
+    # Rule: a trainer cannot have overlapping classes in same day.
+    trainer_pair_conflicts = _collect_pair_conflicts(trainer_groups)
+    for (trainer_job_id, day_order, left_id, right_id), slot_indices in sorted(
+        trainer_pair_conflicts.items(),
+        key=lambda item: (item[0][0], item[0][1], item[0][2], item[0][3]),
+    ):
+        left_code = code_by_id.get(left_id)
+        right_code = code_by_id.get(right_id)
+        if left_code is None or right_code is None:
             continue
 
-        ids = [c.id for c in grouped_codes if c.id is not None]
-        for current in grouped_codes:
-            peer_ids = [x for x in ids if x != current.id]
-            counts["trainer_time_conflict"] += 1
-            _add_issue(
-                db=db,
-                run_id=run_id,
-                code_id=current.id,
-                related_code_id=peer_ids[0] if peer_ids else None,
-                issue_type="CONFLICT",
-                rule_code="TRAINER_TIME_CONFLICT",
-                message=(
-                    f"Trainer {trainer_job_id} has multiple classes in same slot "
-                    f"(day={day_order}, slot={slot_index})."
-                ),
-                conflict_key=_conflict_key("trainer", trainer_job_id, day_order, slot_index),
-                details={
-                    "trainer_job_id": trainer_job_id,
-                    "day_order": day_order,
-                    "slot_index": slot_index,
-                    "code_ids": ids,
-                },
-            )
+        counts["trainer_time_conflict"] += 1
+        _add_issue(
+            db=db,
+            run_id=run_id,
+            code_id=left_id,
+            related_code_id=right_id,
+            issue_type="CONFLICT",
+            rule_code="TRAINER_TIME_CONFLICT",
+            message=(
+                f"Trainer {trainer_job_id} has overlapping classes "
+                f"(day={day_order}, slots={','.join(str(x) for x in slot_indices)})."
+            ),
+            conflict_key=_pair_conflict_key("trainer", trainer_job_id, day_order, left_id, right_id),
+            details={
+                "trainer_job_id": trainer_job_id,
+                "day_order": day_order,
+                "slot_indices": slot_indices,
+                "code_ids": [left_id, right_id],
+                "left_time": left_code.time_value,
+                "right_time": right_code.time_value,
+            },
+        )
 
-    # Rule: a room cannot host more than one class in same day/slot.
-    for (room_code, day_order, slot_index), grouped_codes in room_groups.items():
-        if len(grouped_codes) <= 1:
+    # Rule: a room cannot host overlapping classes in same day.
+    room_pair_conflicts = _collect_pair_conflicts(room_groups)
+    for (room_code, day_order, left_id, right_id), slot_indices in sorted(
+        room_pair_conflicts.items(),
+        key=lambda item: (item[0][0], item[0][1], item[0][2], item[0][3]),
+    ):
+        left_code = code_by_id.get(left_id)
+        right_code = code_by_id.get(right_id)
+        if left_code is None or right_code is None:
             continue
 
-        ids = [c.id for c in grouped_codes if c.id is not None]
-        for current in grouped_codes:
-            peer_ids = [x for x in ids if x != current.id]
-            counts["room_time_conflict"] += 1
-            _add_issue(
-                db=db,
-                run_id=run_id,
-                code_id=current.id,
-                related_code_id=peer_ids[0] if peer_ids else None,
-                issue_type="CONFLICT",
-                rule_code="ROOM_TIME_CONFLICT",
-                message=(
-                    f"Room {room_code} has multiple classes in same slot "
-                    f"(day={day_order}, slot={slot_index})."
-                ),
-                conflict_key=_conflict_key("room", room_code, day_order, slot_index),
-                details={
-                    "room_code": room_code,
-                    "day_order": day_order,
-                    "slot_index": slot_index,
-                    "code_ids": ids,
-                },
-            )
+        counts["room_time_conflict"] += 1
+        _add_issue(
+            db=db,
+            run_id=run_id,
+            code_id=left_id,
+            related_code_id=right_id,
+            issue_type="CONFLICT",
+            rule_code="ROOM_TIME_CONFLICT",
+            message=(
+                f"Room {room_code} has overlapping classes "
+                f"(day={day_order}, slots={','.join(str(x) for x in slot_indices)})."
+            ),
+            conflict_key=_pair_conflict_key("room", room_code, day_order, left_id, right_id),
+            details={
+                "room_code": room_code,
+                "day_order": day_order,
+                "slot_indices": slot_indices,
+                "code_ids": [left_id, right_id],
+                "left_time": left_code.time_value,
+                "right_time": right_code.time_value,
+            },
+        )
 
     total_issues = (
         counts["trainer_time_conflict"] + counts["room_time_conflict"] + counts["capacity_exceeded"]

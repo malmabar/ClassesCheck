@@ -1041,3 +1041,27 @@
 4. الأثر:
    - فشل سريع (fail-fast) إذا دخل خطأ تركيبي على سكربت الإصدار.
    - تقليل استهلاك وقت CI على خطوات البنية التحتية عند وجود خطأ Bash مباشر.
+
+### [W-053] إصلاح تضخم `total_issues` عبر Dedupe تعارضات الوقت
+1. الهدف:
+   - إيقاف العدّ المكرر في فحوصات التعارض الزمني (مدرب/قاعة) عندما يمتد التعارض عبر عدة فترات متتالية.
+2. السبب الجذري:
+   - المنطق السابق كان يعدّ التعارض لكل خلية زمنية متداخلة ولكل شعبة داخل الخلية، مما يضاعف `total_issues` بشكل كبير.
+3. التعديل المنفذ:
+   - تحديث:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/services/check_service.py`
+   - إضافة دالة:
+     - `_collect_pair_conflicts(...)`
+   - السلوك الجديد:
+     - تحويل التعارض إلى زوج فريد (`code_id`, `related_code_id`) لكل كيان/يوم.
+     - جمع `slot_indices` المتداخلة داخل `details_json` بدل إنشاء Issue مكرر لكل slot.
+     - حساب `trainer_time_conflict` و`room_time_conflict` بعدد الأزواج الفريدة فقط.
+4. اختبارات التحقق:
+   - إضافة:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_check_service_dedupe.py`
+   - تشغيل:
+     - `.venv/bin/python -m pytest -q backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py`
+   - النتيجة:
+     - `4 passed`
+5. الأثر:
+   - `total_issues` أصبح أكثر استقرارًا ويمثل التعارضات الفعلية بدون تضخيم slot-by-slot.

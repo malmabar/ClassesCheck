@@ -670,3 +670,23 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
    - بعد اختبار `Cleanup Cache Regression Test` وقبل `Wait For Postgres`.
 4. النتيجة:
    - أي خطأ تركيبي في سكربت الإصدار يفشل الـworkflow مبكرًا (fail-fast) قبل تشغيل خدمات DB/API.
+
+## 30) إصلاح عدّ التعارضات المكرر في Checks (تم)
+
+1. ما تم تعديله:
+   - ملف:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/services/check_service.py`
+2. المشكلة السابقة:
+   - تعارض المدرب/القاعة كان يُسجّل لكل slot متداخل ولكل صف، ما يرفع `total_issues` بشكل مبالغ فيه.
+3. التعديل:
+   - إضافة dedupe على مستوى زوج الأكواد لكل كيان/يوم:
+     - دالة `_collect_pair_conflicts(...)`
+   - كل زوج متعارض يُسجل مرة واحدة فقط، مع حفظ `slot_indices` المتداخلة في `details_json`.
+4. تغطية الاختبار:
+   - ملف جديد:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_check_service_dedupe.py`
+   - التحقق المنفذ:
+     - `.venv/bin/python -m pytest -q backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py`
+     - النتيجة: `4 passed`
+5. الأثر:
+   - `total_issues` لم يعد يتضخم بسبب تكرار الفترات المتتابعة لنفس زوج التعارض.

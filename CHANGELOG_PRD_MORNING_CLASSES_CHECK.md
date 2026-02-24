@@ -1,5 +1,26 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.48 - 24 فبراير 2026
+
+### الملخص
+إصلاح منطق عدّ مشاكل التعارض الزمني لمنع التكرار عبر الفترات المتداخلة، بحيث يصبح `total_issues` معبّرًا عن التعارضات الفعلية.
+
+### أهم التغييرات
+1. تحديث:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/services/check_service.py`
+2. إضافة dedupe logic:
+   - تجميع تعارضات المدربين والقاعات كأزواج فريدة لكل كيان/يوم بدل العدّ لكل slot.
+   - حفظ `slot_indices` المتداخلة في `details_json` لنفس الـissue.
+3. إضافة اختبارات:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_check_service_dedupe.py`
+4. تحقق محلي:
+   - `.venv/bin/python -m pytest -q backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py`
+   - النتيجة: `4 passed`
+
+### الأثر على التنفيذ
+1. تقليل تضخم `total_issues` الناتج عن التكرار slot-by-slot.
+2. تحسين موثوقية المقارنة مع مخرجات التحليل اليدوي/Excel عند مراجعة شدة التعارضات.
+
 ## v1.47 - 24 فبراير 2026
 
 ### الملخص
