@@ -55,6 +55,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e backend
+          pip install pytest
+
+      - name: Cleanup Cache Regression Test
+        run: |
+          python -m pytest -q backend/tests/test_release_with_gate_cleanup.py
 
       - name: Wait For Postgres
         run: |

@@ -1010,3 +1010,18 @@
 5. الأثر:
    - تأمين Regression واضح لسلوك التنظيف.
    - تقليل احتمال كسر سلوك التنظيف مستقبلًا أثناء تطوير مسار الإصدار.
+
+### [W-051] ربط اختبار تنظيف cache داخل CI الإلزامي
+1. الهدف:
+   - تحويل اختبار `--clean-acceptance-cache` من تحقق محلي فقط إلى بوابة CI إلزامية قبل نجاح `Mandatory Release Gate`.
+2. التعديل المنفذ:
+   - تحديث workflow:
+     - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+   - إضافة تثبيت:
+     - `pip install pytest`
+   - إضافة خطوة اختبار جديدة:
+     - `python -m pytest -q backend/tests/test_release_with_gate_cleanup.py`
+3. ترتيب التنفيذ في CI:
+   - `Install Backend` -> `Cleanup Cache Regression Test` -> بقية خطوات gate (DB + API + release script).
+4. الأثر:
+   - أي كسر مستقبلي في سلوك التنظيف سيوقف الـPR مبكرًا قبل إكمال مسار الإصدار.

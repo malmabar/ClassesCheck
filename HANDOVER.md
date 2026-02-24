@@ -640,3 +640,18 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
      - `.venv/bin/python -m pytest -q backend/tests/test_release_with_gate_cleanup.py`
    - النتيجة:
      - `2 passed`.
+
+## 28) إدخال اختبار cleanup ضمن Mandatory Release Gate (تم)
+
+1. ما تم تعديله:
+   - ملف:
+     - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+2. التغييرات:
+   - تثبيت `pytest` داخل خطوة التثبيت.
+   - إضافة خطوة CI صريحة:
+     - `Cleanup Cache Regression Test`
+     - تشغّل:
+       - `python -m pytest -q backend/tests/test_release_with_gate_cleanup.py`
+3. النتيجة التشغيلية:
+   - اختبار سلوك `--clean-acceptance-cache` أصبح جزءًا إلزاميًا من workflow.
+   - فشل الاختبار يوقف `Mandatory Release Gate` قبل متابعة خطوات قاعدة البيانات وتشغيل السكربت.
