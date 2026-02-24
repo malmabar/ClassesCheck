@@ -1,5 +1,24 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.51 - 24 فبراير 2026
+
+### الملخص
+إضافة فحص CI صريح لإعادة تشغيل المهاجرات للتأكد من idempotency بشكل إلزامي داخل `Mandatory Release Gate`.
+
+### أهم التغييرات
+1. تحديث:
+   - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+2. إضافة خطوة:
+   - `Re-run Migrations Idempotency Check`
+   - وتشغّل:
+     - `python -m alembic -c alembic.ini upgrade head`
+3. ترتيب التنفيذ:
+   - بعد `Run Migrations` مباشرة وقبل تشغيل API.
+
+### الأثر على التنفيذ
+1. كشف مبكر لأي migration غير idempotent في CI.
+2. تقليل مفاجآت التشغيل عند إعادة تطبيق migrations على بيئات قائمة.
+
 ## v1.50 - 24 فبراير 2026
 
 ### الملخص

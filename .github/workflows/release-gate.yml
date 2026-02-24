@@ -88,6 +88,10 @@ jobs:
         working-directory: backend
         run: python -m alembic -c alembic.ini upgrade head
 
+      - name: Re-run Migrations Idempotency Check
+        working-directory: backend
+        run: python -m alembic -c alembic.ini upgrade head
+
       - name: Start API Server
         run: |
           nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 --app-dir backend > /tmp/uvicorn.log 2>&1 &
