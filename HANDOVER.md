@@ -819,3 +819,25 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
    - سؤال "يدعم أي مقاس؟" تم حسمه تشغيليًا:
      - الأداة تدعم أي مقاس عبر `--viewport-width/--viewport-height`.
    - التعثر السابق كان خطأ أمر shell (`zsh word-splitting`) وليس خلل responsive في النظام.
+
+## 36) استكمال Responsive للفترة المسائية (13/24/27 إنش) (تم)
+
+1. الهدف:
+   - إكمال مصفوفة الاختبار الرسمية للـresponsive للفترة `مسائي` بنفس أحجام `صباحي`.
+2. التشغيل:
+   - `1280x800`:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_13in_evening_20260224`
+   - `1920x1080`:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_24in_evening_20260224`
+   - `2560x1440`:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_27in_evening_20260224`
+3. التحقق:
+   - كل تشغيل أنتج `00_full_page.png` و`01_screens_card.png` و`meta.json` وباقي لقطات التبويبات.
+   - `meta.json` لكل تشغيل أكد:
+     - `period = مسائي`
+     - `panels = 4`
+     - viewport مطابق للمطلوب.
+4. الحالة:
+   - تغطية responsive مكتملة الآن للفترتين:
+     - `صباحي` (Section 35)
+     - `مسائي` (Section 36)

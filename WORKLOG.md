@@ -1212,3 +1212,26 @@
    - أداة snapshots تدعم أي مقاس مباشرة عبر:
      - `--viewport-width`
      - `--viewport-height`
+
+### [W-059] تنفيذ تغطية Responsive للفترة المسائية على 13/24/27 إنش
+1. الهدف:
+   - استكمال التحقق البصري الرسمي للفترة `مسائي` بنفس المقاسات القياسية المستخدمة في `صباحي`.
+2. التنفيذ:
+   - أداة:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/ui_snapshots.py`
+   - التشغيل تم على:
+     - `1280x800` -> `responsive_13in_evening_20260224`
+     - `1920x1080` -> `responsive_24in_evening_20260224`
+     - `2560x1440` -> `responsive_27in_evening_20260224`
+3. الأدلة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_13in_evening_20260224`
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_24in_evening_20260224`
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_27in_evening_20260224`
+4. التحقق:
+   - كل مجلد يحتوي `15` ملفًا (صفحة كاملة + الكرت + تبويبات + hover + meta).
+   - `meta.json` أكد:
+     - `period = مسائي`
+     - `panels = 4`
+     - مقاس viewport مطابق لكل تشغيل.
+5. الأثر:
+   - إغلاق تغطية responsive على الفترتين (`صباحي` + `مسائي`) لنفس أحجام الأجهزة المرجعية.
