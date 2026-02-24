@@ -106,6 +106,9 @@ fi
 mkdir -p "$(dirname "${OUTPUT_FILE}")"
 mkdir -p "$(dirname "${PROOF_FILE}")"
 
+OUTPUT_REL="${OUTPUT_FILE#${ROOT_DIR}/}"
+PROOF_REL="${PROOF_FILE#${ROOT_DIR}/}"
+
 GATE_CMD=(
   "${PYTHON_EXEC}"
   -m app.tools.release_readiness_gate
@@ -152,12 +155,12 @@ print(f"Release proof validated: {proof_path}")
 PY
 
 if [[ -n "${TAG_NAME}" ]]; then
-  if ! git -C "${ROOT_DIR}" diff --quiet; then
-    echo "Working tree has unstaged changes. Refusing to tag." >&2
+  if ! git -C "${ROOT_DIR}" diff --quiet -- . ":(exclude)${OUTPUT_REL}" ":(exclude)${PROOF_REL}"; then
+    echo "Working tree has unstaged changes (excluding gate output files). Refusing to tag." >&2
     exit 1
   fi
-  if ! git -C "${ROOT_DIR}" diff --cached --quiet; then
-    echo "Working tree has staged but uncommitted changes. Refusing to tag." >&2
+  if ! git -C "${ROOT_DIR}" diff --cached --quiet -- . ":(exclude)${OUTPUT_REL}" ":(exclude)${PROOF_REL}"; then
+    echo "Working tree has staged but uncommitted changes (excluding gate output files). Refusing to tag." >&2
     exit 1
   fi
   if git -C "${ROOT_DIR}" rev-parse -q --verify "refs/tags/${TAG_NAME}" >/dev/null; then
