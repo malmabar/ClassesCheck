@@ -1,5 +1,26 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.38 - 24 فبراير 2026
+
+### الملخص
+تشديد Branch Protection على `main` بإلغاء استثناءات الإدارة عبر تفعيل `enforce_admins=true`.
+
+### أهم التغييرات
+1. تحديث حماية الفرع:
+   - `enforce_admins = true`
+2. الإعدادات المستمرة مع هذا التحديث:
+   - Required status check: `Mandatory Release Gate` (strict)
+   - PR approval required: `1`
+   - Conversation resolution required: `true`
+   - Force push disabled
+   - Branch deletion disabled
+3. ملاحظة توافق API:
+   - تم استبعاد `bypass_pull_request_allowances` لأن repo فردي، وتسبب هذا الحقل سابقًا في `HTTP 422`.
+
+### الأثر على التنفيذ
+1. لم يعد حساب الإدارة يستطيع تجاوز قواعد الدمج القياسية على `main`.
+2. تعزيز الحوكمة: أي تعديل على `main` يجب أن يمر عبر نفس معايير الجودة الإلزامية.
+
 ## v1.37 - 24 فبراير 2026
 
 ### الملخص

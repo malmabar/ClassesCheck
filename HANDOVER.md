@@ -462,3 +462,19 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
    - آخر run لـ`Release Gate`:
      - `22345106690`
      - `conclusion = success`
+
+## 20) تشديد الحماية: `enforce_admins=true` (تم)
+
+1. تم إعادة ضبط حماية `main` لتشمل حسابات الإدارة أيضًا:
+   - `enforce_admins = true`
+2. إعدادات الحماية الفعالة بعد التحديث:
+   - Required status check: `Mandatory Release Gate` (strict=true)
+   - PR approval: `1`
+   - Conversation resolution: `true`
+   - Force push: `disabled`
+   - Deletion: `disabled`
+3. ملاحظة API:
+   - حقل `bypass_pull_request_allowances` غير مدعوم في repos الفردية وسبّب `422`.
+   - تم اعتماد payload متوافق مع repository user-owned.
+4. النتيجة:
+   - الحماية أصبحت مشددة فعليًا على `main` وتشمل الحساب الإداري.
