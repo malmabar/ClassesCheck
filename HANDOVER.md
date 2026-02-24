@@ -441,3 +441,24 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
    - لأن الموديلات/الهجرات تستخدم schema-qualified names ولا تحتاج search_path في CI.
 4. الحالة بعد الإصلاح:
    - التعديلات جاهزة للدفع، والهدف التحقق من run جديد ناجح (`success`) على GitHub Actions.
+
+## 19) تفعيل Branch Protection على `main` (تم)
+
+1. الحالة:
+   - تم تطبيق Branch Protection على `main` في:
+     - `malmabar/ClassesCheck`
+2. أهم القواعد الفعالة:
+   - Required status check:
+     - `Mandatory Release Gate`
+   - `strict` status checks = `true` (الفرع يجب أن يكون محدثًا مع base).
+   - PR reviews مطلوبة:
+     - `required_approving_review_count = 1`
+   - `required_conversation_resolution = true`
+   - `allow_force_pushes = false`
+   - `allow_deletions = false`
+3. النتيجة:
+   - الدمج إلى `main` أصبح محكومًا رسميًا بنجاح CI gate + مراجعة.
+4. ملاحظة متابعة:
+   - آخر run لـ`Release Gate`:
+     - `22345106690`
+     - `conclusion = success`

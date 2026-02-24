@@ -801,3 +801,22 @@
    - مراجعة workflow YAML بعد التعديل.
 6. الخطوة التالية:
    - دفع الإصلاح إلى `main` ثم التحقق من run الجديد وأن `conclusion = success`.
+7. نتيجة المتابعة:
+   - Run جديد (`22345106690`) انتهى بـ`success`.
+
+### [W-042] تفعيل Branch Protection على `main`
+1. تم تفعيل حماية الفرع عبر GitHub API:
+   - repo: `malmabar/ClassesCheck`
+   - branch: `main`
+2. إعدادات الحماية المفعلة:
+   - `required_status_checks.strict = true`
+   - required check context:
+     - `Mandatory Release Gate`
+   - `required_pull_request_reviews.required_approving_review_count = 1`
+   - `required_conversation_resolution = true`
+   - `allow_force_pushes = false`
+   - `allow_deletions = false`
+3. التحقق:
+   - قراءة إعدادات الحماية بعد التطبيق أكدت نجاح الضبط بالقيم أعلاه.
+4. الأثر:
+   - لا يمكن الدمج إلى `main` إلا بعد نجاح `Release Gate` + مراجعة PR واحدة على الأقل.

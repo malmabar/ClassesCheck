@@ -1,5 +1,29 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.37 - 24 فبراير 2026
+
+### الملخص
+تفعيل Branch Protection رسميًا على `main` وربط الدمج الإجباري بنجاح `Mandatory Release Gate`.
+
+### أهم التغييرات
+1. تطبيق Branch Protection على:
+   - `malmabar/ClassesCheck` -> `main`
+2. القواعد المفعلة:
+   - Required status check context:
+     - `Mandatory Release Gate`
+   - `strict` checks = `true`
+   - PR approvals required:
+     - `1`
+   - Conversation resolution required = `true`
+   - Force pushes = `disabled`
+   - Branch deletions = `disabled`
+3. تأكيد تشغيلي:
+   - آخر run للـGate (`22345106690`) نجح (`success`) بعد إصلاحات CI.
+
+### الأثر على التنفيذ
+1. حماية `main` أصبحت enforced على مستوى GitHub.
+2. منع أي merge يتجاوز بوابة الجودة والتشغيل الإلزامية.
+
 ## v1.36 - 24 فبراير 2026
 
 ### الملخص
