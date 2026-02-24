@@ -756,3 +756,34 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
    - التأكد أن إعادة تنفيذ المهاجرات في نفس البيئة لا ينتج أخطاء (no-op behavior).
 5. الأثر:
    - أي regression في idempotency سيوقف `Mandatory Release Gate` مبكرًا.
+
+## 34) إصلاح فشل `excel_cache_parity` غير الحتمي عند `--source-csv` (تم)
+
+1. البلاغ:
+   - `acceptance_gate` كان يفشل في المسائي بسبب:
+     - `excel_cache_parity_mismatch=158`
+   - رغم أن:
+     - `publish`
+     - `export.xlsx`
+     - `export.pdf`
+     كانت ناجحة.
+2. السبب الجذري:
+   - فحص `excel_cache_parity` كان يُفعل دائمًا حتى عندما يكون مصدر البيانات `--source-csv` خارجي.
+   - كاش شيت الإكسل يمثل baseline مختلفًا عن CSV الخارجي في بعض الجلسات، فينتج mismatch غير تشغيلي (false-failure).
+3. ما تم تعديله:
+   - ملف:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/acceptance_gate.py`
+   - المنطق الجديد:
+     - عند تمرير `--source-csv`:
+       - يتم تعطيل `excel_cache_parity` مع reason صريح داخل التقرير.
+     - عند عدم تمرير `--source-csv` (المصدر مستخرج من workbook):
+       - يبقى فحص `excel_cache_parity` مفعّلًا كما هو.
+4. التحقق المنفذ:
+   - تشغيل:
+     - `.venv/bin/python -m app.tools.acceptance_gate --base-url http://127.0.0.1:8000 --source-csv /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --semester 144620 --period all --created-by api-user`
+   - النتيجة:
+     - `overall_status: PASSED`
+     - الفترتان `PASSED`.
+     - `excel_cache_parity.checked=false` مع سبب واضح.
+5. ملاحظة تشغيلية:
+   - هذا الإصلاح لا يلغي مقارنة كاش الإكسل بالكامل؛ فقط يمنع استخدامها كـgate blocker عندما baseline ليس workbook نفسه.

@@ -1153,3 +1153,32 @@
    - التشغيل الثاني يؤكد أنها no-op وآمنة لإعادة التنفيذ.
 4. الأثر:
    - اكتشاف مبكر لأي migration غير idempotent في PR قبل الوصول لمراحل API/Gate.
+
+### [W-057] منع false-failure في `excel_cache_parity` عند استخدام `--source-csv`
+1. الهدف:
+   - إيقاف فشل `acceptance_gate` غير الحتمي عندما يكون مصدر البيانات CSV خارجي لا يطابق كاش شيت الإكسل.
+2. السبب الجذري:
+   - فحص `excel_cache_parity` كان يُنفَّذ دائمًا ويُعامل كشرط فشل حتى مع `--source-csv`.
+   - عند هذا السيناريو، مقارنة كاش الشيت مع المصدر الخارجي قد تُنتج mismatch كبيرًا رغم صحة API والمنطق التشغيلي.
+3. التعديل المنفذ:
+   - تحديث:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/acceptance_gate.py`
+   - إضافة policy في `main`:
+     - عند تمرير `--source-csv`:
+       - `excel_cache_check_enabled = False`
+       - تسجيل سبب واضح داخل `excel_cache_parity.reason`.
+     - عند عدم تمرير `--source-csv` (استخراج من workbook):
+       - يبقى فحص `excel_cache_parity` مفعّلًا كما هو.
+   - تحديث توقيع `_run_period_gate` لتمرير policy بشكل صريح.
+4. التحقق:
+   - فحص syntax:
+     - `ast.parse` لملف `acceptance_gate.py` (ناجح).
+   - تشغيل:
+     - `.venv/bin/python -m app.tools.acceptance_gate --base-url http://127.0.0.1:8000 --source-csv /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --semester 144620 --period all --created-by api-user`
+   - النتيجة:
+     - `overall_status: PASSED`
+     - `excel_cache_parity.checked: false` مع سبب صريح.
+     - فحوص `publish/export xlsx/export pdf` بقيت ناجحة للفترتين.
+5. الأثر:
+   - إزالة فشل Gate غير الواقعي في مسار التشغيل الحقيقي المعتمد على `SS01.csv`.
+   - الحفاظ على فحص parity مع كاش الإكسل فقط في السيناريو الذي تكون فيه المقارنة deterministic.

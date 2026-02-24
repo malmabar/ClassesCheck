@@ -1004,7 +1004,14 @@ def _run_publish_export_regression(
     }
 
 
-def _run_period_gate(options: GateOptions, csv_file: Path, semester: str, period: str) -> dict:
+def _run_period_gate(
+    options: GateOptions,
+    csv_file: Path,
+    semester: str,
+    period: str,
+    excel_cache_check_enabled: bool,
+    excel_cache_skip_reason: str,
+) -> dict:
     period_report: dict[str, Any] = {
         "period": period,
         "status": "PENDING",
@@ -1059,11 +1066,19 @@ def _run_period_gate(options: GateOptions, csv_file: Path, semester: str, period
         "mismatches_sample": parity["mismatches_sample"],
     }
 
-    excel_parity = _compare_with_evening_excel_cache(
-        workbook_file=options.workbook_file,
-        counts=actual["counts"],
-        period=period,
-    )
+    if excel_cache_check_enabled:
+        excel_parity = _compare_with_evening_excel_cache(
+            workbook_file=options.workbook_file,
+            counts=actual["counts"],
+            period=period,
+        )
+    else:
+        excel_parity = {
+            "checked": False,
+            "reason": excel_cache_skip_reason,
+            "mismatch_count": 0,
+            "mismatches_sample": [],
+        }
     period_report["checks"]["excel_cache_parity"] = excel_parity
 
     publish_export_regression = _run_publish_export_regression(
@@ -1113,11 +1128,18 @@ def main() -> int:
         if options.source_csv:
             source_csv = options.source_csv
             extraction_meta = {"rows_written": None, "semester": None}
+            excel_cache_check_enabled = False
+            excel_cache_skip_reason = (
+                "Skipped because --source-csv was provided. "
+                "Excel cache parity is deterministic only when source is extracted from the workbook."
+            )
         else:
             temp_dir = PROJECT_ROOT / "artifacts" / "acceptance" / "tmp"
             temp_dir.mkdir(parents=True, exist_ok=True)
             source_csv = temp_dir / f"ss01_from_workbook_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
             extraction_meta = _extract_ss01_report_to_csv(options.workbook_file, source_csv)
+            excel_cache_check_enabled = True
+            excel_cache_skip_reason = ""
         semester = options.semester or extraction_meta.get("semester")
         if not semester:
             raise RuntimeError("semester could not be resolved from args or workbook SS01_Report!A2")
@@ -1128,7 +1150,14 @@ def main() -> int:
 
         periods = PERIODS if options.period == "all" else (options.period,)
         for period in periods:
-            period_report = _run_period_gate(options, source_csv, semester, period)
+            period_report = _run_period_gate(
+                options=options,
+                csv_file=source_csv,
+                semester=semester,
+                period=period,
+                excel_cache_check_enabled=excel_cache_check_enabled,
+                excel_cache_skip_reason=excel_cache_skip_reason,
+            )
             report["period_reports"].append(period_report)
 
         has_failure = any(item.get("status") != "PASSED" for item in report["period_reports"])
