@@ -549,3 +549,30 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
 4. الحالة التشغيلية الحالية:
    - العمليات الثلاث تعمل على التشغيلات الجاهزة.
    - في حال وقوع خطأ غير متوقع لاحقًا، سيظهر نوعه ورسالة أدق لتسريع المعالجة.
+
+## 24) تعزيز Acceptance Gate لاختبار Regression API للتصدير/النشر (تم)
+
+1. ما الذي تغير:
+   - تم توسيع:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/acceptance_gate.py`
+   - فحص القبول أصبح يتضمن:
+     - `publish` مرتين للتأكد من idempotency.
+     - `export.xlsx` و`export.pdf` مرتين.
+     - التحقق من:
+       - `content-type`
+       - `content-disposition` + اسم الملف
+       - صحة توقيع الملف (PK/PDF)
+     - التحقق أن artifacts مسجلة فعليًا عبر:
+       - `GET /api/v1/mc/runs/{run_id}/artifacts`
+     - التحقق أن totals في endpoints publish (`halls/crns/trainers/distribution`) تطابق totals الناتجة من `publish`.
+2. سبب التغيير:
+   - إغلاق فجوة كانت تسمح بمرور gate رغم احتمال وجود خلل API جزئي في النشر/التصدير.
+3. نتيجة التنفيذ:
+   - تشغيل gate على:
+     - `/Users/malmabar/Desktop/TraineeConflicts/SS01.csv`
+     - period: `صباحي`
+   - الحالة:
+     - `PASSED`
+     - لا failures في `publish_export_regression`.
+4. ما الذي يعنيه هذا لفريق التشغيل:
+   - مشاكل `publish/export` ستظهر مبكرًا في CI/Gate قبل أي إصدار فعلي.

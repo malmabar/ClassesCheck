@@ -787,8 +787,220 @@ def _check_export(base_url: str, run_id: str, created_by: str, export_kind: str,
         "size": len(data),
         "content_type": headers.get("content-type"),
         "content_disposition": headers.get("content-disposition"),
+        "file_name": _extract_filename_from_disposition(headers.get("content-disposition")),
         "signature_ok": bool(signature_ok),
         "head_hex": head_hex,
+    }
+
+
+def _extract_filename_from_disposition(content_disposition: Optional[str]) -> Optional[str]:
+    value = str(content_disposition or "").strip()
+    if not value:
+        return None
+    for part in value.split(";"):
+        token = part.strip()
+        lower = token.lower()
+        if lower.startswith("filename*="):
+            raw = token.split("=", 1)[1].strip().strip('"')
+            if raw.lower().startswith("utf-8''"):
+                raw = raw[7:]
+            return url_parse.unquote(raw) or None
+        if lower.startswith("filename="):
+            return token.split("=", 1)[1].strip().strip('"') or None
+    return None
+
+
+def _list_run_artifacts(
+    base_url: str,
+    run_id: str,
+    timeout_sec: int,
+    artifact_type: Optional[str] = None,
+) -> List[dict]:
+    page = 1
+    size = 200
+    items: List[dict] = []
+    while True:
+        query_args = {"page": str(page), "size": str(size)}
+        if artifact_type:
+            query_args["artifact_type"] = artifact_type
+        query = url_parse.urlencode(query_args)
+        payload = _http_json(
+            method="GET",
+            url=f"{base_url}/api/v1/mc/runs/{run_id}/artifacts?{query}",
+            timeout_sec=timeout_sec,
+        )
+        rows = payload.get("items") or []
+        items.extend(rows)
+        if not payload.get("has_next"):
+            break
+        page += 1
+        if page > 50:
+            break
+    return items
+
+
+def _validate_publish_snapshot_totals(
+    base_url: str,
+    run_id: str,
+    timeout_sec: int,
+    publish_result: dict,
+) -> dict:
+    endpoint_by_metric = {
+        "halls_rows": "halls",
+        "crns_rows": "crns",
+        "trainers_rows": "trainers",
+        "distribution_rows": "distribution",
+    }
+    snapshot_totals: Dict[str, int] = {}
+    gate_failures: List[str] = []
+
+    for metric_key, endpoint in endpoint_by_metric.items():
+        payload = _http_json(
+            method="GET",
+            url=f"{base_url}/api/v1/mc/runs/{run_id}/{endpoint}?page=1&size=1",
+            timeout_sec=timeout_sec,
+        )
+        total = int(payload.get("total") or 0)
+        expected = int(publish_result.get(metric_key) or 0)
+        snapshot_totals[metric_key] = total
+        if total != expected:
+            gate_failures.append(
+                f"{metric_key}_snapshot_total_mismatch:{total}!={expected}"
+            )
+
+    return {
+        "snapshot_totals": snapshot_totals,
+        "gate_failures": gate_failures,
+    }
+
+
+def _run_publish_export_regression(
+    base_url: str,
+    run_id: str,
+    created_by: str,
+    timeout_sec: int,
+) -> dict:
+    gate_failures: List[str] = []
+
+    publish_first = _publish_run(
+        base_url=base_url,
+        run_id=run_id,
+        created_by=created_by,
+        timeout_sec=timeout_sec,
+    )
+    publish_second = _publish_run(
+        base_url=base_url,
+        run_id=run_id,
+        created_by=created_by,
+        timeout_sec=timeout_sec,
+    )
+
+    publish_result_first = publish_first.get("result") or {}
+    publish_result_second = publish_second.get("result") or {}
+    if str(publish_result_first.get("status")) != "PUBLISHED":
+        gate_failures.append(f"publish_status_first={publish_result_first.get('status')}")
+    if str(publish_result_second.get("status")) != "PUBLISHED":
+        gate_failures.append(f"publish_status_second={publish_result_second.get('status')}")
+
+    snapshot_validation = _validate_publish_snapshot_totals(
+        base_url=base_url,
+        run_id=run_id,
+        timeout_sec=timeout_sec,
+        publish_result=publish_result_second or publish_result_first,
+    )
+    gate_failures.extend(snapshot_validation["gate_failures"])
+
+    xlsx_first = _check_export(
+        base_url=base_url,
+        run_id=run_id,
+        created_by=created_by,
+        export_kind="xlsx",
+        timeout_sec=timeout_sec,
+    )
+    xlsx_second = _check_export(
+        base_url=base_url,
+        run_id=run_id,
+        created_by=created_by,
+        export_kind="xlsx",
+        timeout_sec=timeout_sec,
+    )
+    pdf_first = _check_export(
+        base_url=base_url,
+        run_id=run_id,
+        created_by=created_by,
+        export_kind="pdf",
+        timeout_sec=timeout_sec,
+    )
+    pdf_second = _check_export(
+        base_url=base_url,
+        run_id=run_id,
+        created_by=created_by,
+        export_kind="pdf",
+        timeout_sec=timeout_sec,
+    )
+
+    export_checks = [
+        ("xlsx_first", xlsx_first, "spreadsheetml"),
+        ("xlsx_second", xlsx_second, "spreadsheetml"),
+        ("pdf_first", pdf_first, "application/pdf"),
+        ("pdf_second", pdf_second, "application/pdf"),
+    ]
+    for label, payload, expected_ct in export_checks:
+        if not bool(payload.get("signature_ok")):
+            gate_failures.append(f"{label}_signature_failed")
+        if int(payload.get("size") or 0) <= 0:
+            gate_failures.append(f"{label}_empty_payload")
+        content_type = str(payload.get("content_type") or "").lower()
+        if expected_ct not in content_type:
+            gate_failures.append(f"{label}_content_type_invalid={content_type or 'missing'}")
+        if not str(payload.get("file_name") or "").strip():
+            gate_failures.append(f"{label}_missing_filename")
+
+    artifacts_xlsx = _list_run_artifacts(
+        base_url=base_url,
+        run_id=run_id,
+        timeout_sec=timeout_sec,
+        artifact_type="EXPORT_XLSX",
+    )
+    artifacts_pdf = _list_run_artifacts(
+        base_url=base_url,
+        run_id=run_id,
+        timeout_sec=timeout_sec,
+        artifact_type="EXPORT_PDF",
+    )
+    if len(artifacts_xlsx) < 1:
+        gate_failures.append("artifacts_xlsx_missing")
+    if len(artifacts_pdf) < 1:
+        gate_failures.append("artifacts_pdf_missing")
+
+    xlsx_file_names = {str(item.get("file_name") or "").strip() for item in artifacts_xlsx}
+    pdf_file_names = {str(item.get("file_name") or "").strip() for item in artifacts_pdf}
+    for expected_name in (
+        str(xlsx_first.get("file_name") or "").strip(),
+        str(xlsx_second.get("file_name") or "").strip(),
+    ):
+        if expected_name and expected_name not in xlsx_file_names:
+            gate_failures.append(f"xlsx_artifact_not_registered={expected_name}")
+    for expected_name in (
+        str(pdf_first.get("file_name") or "").strip(),
+        str(pdf_second.get("file_name") or "").strip(),
+    ):
+        if expected_name and expected_name not in pdf_file_names:
+            gate_failures.append(f"pdf_artifact_not_registered={expected_name}")
+
+    return {
+        "publish_first": publish_first,
+        "publish_second": publish_second,
+        "export_xlsx_first": xlsx_first,
+        "export_xlsx_second": xlsx_second,
+        "export_pdf_first": pdf_first,
+        "export_pdf_second": pdf_second,
+        "snapshot_totals": snapshot_validation["snapshot_totals"],
+        "artifact_registry": {
+            "xlsx_count": len(artifacts_xlsx),
+            "pdf_count": len(artifacts_pdf),
+        },
+        "gate_failures": gate_failures,
     }
 
 
@@ -854,30 +1066,23 @@ def _run_period_gate(options: GateOptions, csv_file: Path, semester: str, period
     )
     period_report["checks"]["excel_cache_parity"] = excel_parity
 
-    publish_payload = _publish_run(
+    publish_export_regression = _run_publish_export_regression(
         base_url=options.base_url,
         run_id=run_id,
         created_by=created_by,
         timeout_sec=options.timeout_sec,
     )
-    period_report["checks"]["publish"] = publish_payload
-
-    xlsx_export = _check_export(
-        base_url=options.base_url,
-        run_id=run_id,
-        created_by=created_by,
-        export_kind="xlsx",
-        timeout_sec=options.timeout_sec,
-    )
-    pdf_export = _check_export(
-        base_url=options.base_url,
-        run_id=run_id,
-        created_by=created_by,
-        export_kind="pdf",
-        timeout_sec=options.timeout_sec,
-    )
-    period_report["checks"]["export_xlsx"] = xlsx_export
-    period_report["checks"]["export_pdf"] = pdf_export
+    period_report["checks"]["publish"] = publish_export_regression["publish_first"]
+    period_report["checks"]["publish_idempotency"] = publish_export_regression["publish_second"]
+    period_report["checks"]["export_xlsx"] = publish_export_regression["export_xlsx_first"]
+    period_report["checks"]["export_xlsx_idempotency"] = publish_export_regression["export_xlsx_second"]
+    period_report["checks"]["export_pdf"] = publish_export_regression["export_pdf_first"]
+    period_report["checks"]["export_pdf_idempotency"] = publish_export_regression["export_pdf_second"]
+    period_report["checks"]["publish_export_regression"] = {
+        "snapshot_totals": publish_export_regression["snapshot_totals"],
+        "artifact_registry": publish_export_regression["artifact_registry"],
+        "gate_failures": publish_export_regression["gate_failures"],
+    }
 
     gate_failures = []
     if parity["mismatch_count"] != 0:
@@ -885,13 +1090,7 @@ def _run_period_gate(options: GateOptions, csv_file: Path, semester: str, period
     if excel_parity["checked"] and excel_parity["mismatch_count"] != 0:
         gate_failures.append(f"excel_cache_parity_mismatch={excel_parity['mismatch_count']}")
 
-    publish_result = publish_payload.get("result") or {}
-    if str(publish_result.get("status")) != "PUBLISHED":
-        gate_failures.append(f"publish_status={publish_result.get('status')}")
-    if not bool(xlsx_export["signature_ok"]):
-        gate_failures.append("xlsx_signature_failed")
-    if not bool(pdf_export["signature_ok"]):
-        gate_failures.append("pdf_signature_failed")
+    gate_failures.extend(publish_export_regression["gate_failures"])
 
     period_report["gate_failures"] = gate_failures
     period_report["status"] = "PASSED" if not gate_failures else "FAILED"

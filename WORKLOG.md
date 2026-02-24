@@ -912,3 +912,28 @@
    - التحقق التركيبي للملف المعدّل (`compileall`).
    - إعادة اختبار `publish/export` على تشغيل صالح: `HTTP 200`.
    - إعادة اختبار تشغيل غير مكتمل: `HTTP 400` برسالة precondition واضحة.
+
+### [W-047] رفع اختبار القبول إلى Regression API فعلي لـ Publish/Export
+1. الهدف:
+   - تحويل فحص `publish/export` من فحص توقيع ملف فقط إلى regression API أشمل يمنع رجوع الأعطال.
+2. التعديل المنفذ:
+   - ملف:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/acceptance_gate.py`
+   - إضافة فحوصات جديدة ضمن gate:
+     - `publish` مرتين (idempotency).
+     - `export.xlsx` و`export.pdf` مرتين (idempotency).
+     - التحقق من `content-type` و`content-disposition` واستخراج `file_name`.
+     - التحقق من تسجيل ملفات التصدير في endpoint:
+       - `/api/v1/mc/runs/{run_id}/artifacts`
+     - مطابقة totals لجداول publish عبر endpoints:
+       - `halls`, `crns`, `trainers`, `distribution`
+       مع القيم الناتجة من publish.
+3. التحقق التشغيلي:
+   - تشغيل:
+     - `python -m app.tools.acceptance_gate --period صباحي --source-csv /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --semester 144620`
+   - النتيجة:
+     - `overall_status = PASSED`
+     - `publish_export_regression.gate_failures = []`
+     - `artifact_registry` أكد تسجيل ملفات `XLSX/PDF`.
+4. الأثر:
+   - أي انكسار مستقبلي في publish/export (حتى لو API رجع ملف شكليًا) سيتم كشفه مبكرًا داخل Gate الإلزامي.
