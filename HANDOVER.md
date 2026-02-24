@@ -690,3 +690,30 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
      - النتيجة: `4 passed`
 5. الأثر:
    - `total_issues` لم يعد يتضخم بسبب تكرار الفترات المتتابعة لنفس زوج التعارض.
+
+## 31) ضبط منهج العدّ إلى مستوى الشعبة المتعارضة (تم)
+
+1. سبب التعديل:
+   - أسلوب العدّ بالأزواج بعد الإصلاح السابق كان قد ينتج تضخمًا تركيبيًا في مجموعات التداخل الكبيرة.
+2. ما تم تغييره:
+   - ملف:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/services/check_service.py`
+   - استبدال `_collect_pair_conflicts` بـ `_collect_code_conflicts`.
+   - تسجيل Issue واحدة لكل `code_id` متعارض لكل (entity/day)، مع حفظ:
+     - `peer_ids`
+     - `slot_indices`
+3. الاختبارات:
+   - تحديث:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_check_service_dedupe.py`
+   - نتيجة التحقق:
+     - `.venv/bin/python -m pytest -q backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py`
+     - `4 passed`
+4. تحقق تشغيل حقيقي (SS01):
+   - المصدر:
+     - `/Users/malmabar/Desktop/TraineeConflicts/SS01.csv`
+   - صباحي:
+     - `total_issues=763` (`trainer=9`, `room=113`, `capacity=641`)
+   - مسائي:
+     - `total_issues=221` (`trainer=216`, `room=0`, `capacity=5`)
+5. النتيجة:
+   - العدّ الحالي أكثر اتزانًا تشغيليًا من نموذج الأزواج التركيبي.

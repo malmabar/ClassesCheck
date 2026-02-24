@@ -1,5 +1,31 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.49 - 24 فبراير 2026
+
+### الملخص
+ضبط نهائي لمنهج احتساب التعارضات في `checks` ليكون على مستوى الشعبة المتعارضة (per-code) بدل العدّ التركيبي بالأزواج.
+
+### أهم التغييرات
+1. تحديث:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/services/check_service.py`
+2. تغيير منهج العدّ:
+   - من:
+     - `pair-based` (قد ينتج تضخمًا تركيبيًا في كثافات عالية)
+   - إلى:
+     - `code-based` (Issue واحدة لكل `code_id` متعارض لكل entity/day)
+3. حفظ تفاصيل التعارض داخل الـissue:
+   - `peer_ids`
+   - `slot_indices`
+4. تحديث اختبار regression:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_check_service_dedupe.py`
+5. تحقق تشغيلي على SS01:
+   - `صباحي`: `total_issues=763`
+   - `مسائي`: `total_issues=221`
+
+### الأثر على التنفيذ
+1. تقليل تضخم `total_issues` وجعل الرقم أقرب للقراءة التشغيلية.
+2. الإبقاء على أثر تفصيلي للتعارضات بدون تكرار مفرط.
+
 ## v1.48 - 24 فبراير 2026
 
 ### الملخص
