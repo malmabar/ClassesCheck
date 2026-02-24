@@ -1,5 +1,37 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.33 - 24 فبراير 2026
+
+### الملخص
+تفعيل Gate الإطلاق كشرط CI إلزامي على GitHub Actions، بحيث لا تمر PR/Push/Tag قبل نجاح `release_with_gate`.
+
+### أهم التغييرات
+1. إضافة workflow جديد:
+   - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+2. تغطية التشغيل:
+   - `pull_request`
+   - `push` على `main`
+   - `push` على tags: `v*`
+   - `workflow_dispatch`
+3. خطوات التنفيذ في CI:
+   - تشغيل PostgreSQL service.
+   - تثبيت backend.
+   - تنفيذ Alembic migrations.
+   - تشغيل API (`uvicorn`).
+   - تشغيل gate:
+     - `./scripts/release_with_gate.sh --period all --python-exec "$(which python)"`
+4. إضافة dependency مفقودة:
+   - `openpyxl>=3.1.0` في:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/pyproject.toml`
+   - لضمان عمل `acceptance_gate` في بيئة CI.
+5. تحديث دليل التشغيل:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/README.md`
+   - قسم: `CI Enforcement (GitHub Actions)`.
+
+### الأثر على التنفيذ
+1. أصبح Gate الإطلاق إلزاميًا آليًا في GitHub بدل الاعتماد على التشغيل اليدوي.
+2. خفض احتمال تمرير تغييرات تكسر دورة `Import -> Run -> Checks -> Publish -> Export`.
+
 ## v1.32 - 24 فبراير 2026
 
 ### الملخص

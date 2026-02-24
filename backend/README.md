@@ -139,3 +139,22 @@ Behavior:
 - Blocks release on any gate failure.
 - Validates `release_ready.json` content.
 - Refuses tagging if git working tree is not clean.
+
+## CI Enforcement (GitHub Actions)
+
+The workflow below enforces the same gate automatically in CI:
+
+- `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+
+It runs on:
+- Pull Requests
+- Push to `main`
+- Tags `v*`
+
+CI flow:
+1. Start PostgreSQL service.
+2. Run Alembic migrations.
+3. Start API (`uvicorn`).
+4. Execute:
+   - `./scripts/release_with_gate.sh --period all --python-exec "$(which python)"`
+5. Upload acceptance artifacts and server log.

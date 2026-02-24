@@ -1,0 +1,101 @@
+name: Release Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  release-gate:
+    name: Mandatory Release Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: mc_app
+          POSTGRES_PASSWORD: change_me_with_a_strong_password
+          POSTGRES_DB: morning_classes_check
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mc_app -d morning_classes_check"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 8
+    env:
+      APP_ENV: ci
+      MC_DB_HOST: 127.0.0.1
+      MC_DB_PORT: "5432"
+      MC_DB_NAME: morning_classes_check
+      MC_DB_USER: mc_app
+      MC_DB_PASSWORD: change_me_with_a_strong_password
+      MC_DB_SCHEMA: mc_core
+      MC_META_SCHEMA: mc_meta
+      DATABASE_URL: postgresql+psycopg://mc_app:change_me_with_a_strong_password@127.0.0.1:5432/morning_classes_check?options=-csearch_path%3Dmc_core
+      ALEMBIC_DATABASE_URL: postgresql+psycopg://mc_app:change_me_with_a_strong_password@127.0.0.1:5432/morning_classes_check?options=-csearch_path%3Dmc_core
+      ALEMBIC_VERSION_TABLE: alembic_version_mc
+      ALEMBIC_VERSION_SCHEMA: mc_meta
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e backend
+
+      - name: Run Migrations
+        run: alembic -c backend/alembic.ini upgrade head
+
+      - name: Start API Server
+        run: |
+          nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 --app-dir backend > /tmp/uvicorn.log 2>&1 &
+          echo $! > /tmp/uvicorn.pid
+
+      - name: Wait For Health
+        run: |
+          for i in {1..60}; do
+            if curl -fsS http://127.0.0.1:8000/health >/dev/null; then
+              echo "API is healthy."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API health check failed within timeout."
+          exit 1
+
+      - name: Mandatory Gate
+        run: |
+          chmod +x scripts/release_with_gate.sh
+          ./scripts/release_with_gate.sh --period all --python-exec "$(which python)"
+
+      - name: Upload Gate Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-gate-artifacts
+          path: |
+            artifacts/acceptance/latest.json
+            artifacts/acceptance/release_ready.json
+            artifacts/acceptance/acceptance_*.json
+            /tmp/uvicorn.log
+          if-no-files-found: warn
+
+      - name: Stop API Server
+        if: always()
+        run: |
+          if [ -f /tmp/uvicorn.pid ]; then
+            kill "$(cat /tmp/uvicorn.pid)" || true
+          fi

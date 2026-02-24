@@ -387,3 +387,29 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
    - `main` يتتبع `origin/main`.
 5. النتيجة التشغيلية:
    - عملية release + publish + tag أصبحت مكتملة طرف-إلى-طرف داخل GitHub.
+
+## 17) تفعيل Gate إلزامي في CI (GitHub Actions)
+
+1. ملف workflow الجديد:
+   - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+2. الأحداث المغطاة:
+   - Pull Requests
+   - Push إلى `main`
+   - Push لوسوم `v*`
+   - تشغيل يدوي `workflow_dispatch`
+3. خطوات CI:
+   - PostgreSQL service
+   - `pip install -e backend`
+   - `alembic upgrade head`
+   - تشغيل `uvicorn`
+   - تشغيل:
+     - `./scripts/release_with_gate.sh --period all --python-exec "$(which python)"`
+4. مخرجات CI المرفوعة كـArtifacts:
+   - `artifacts/acceptance/latest.json`
+   - `artifacts/acceptance/release_ready.json`
+   - `/tmp/uvicorn.log`
+5. تعديل تقني داعم:
+   - إضافة `openpyxl>=3.1.0` إلى تبعيات backend في:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/pyproject.toml`
+6. النتيجة:
+   - أي PR/Push/Tag لا يمر إلا بعد نجاح Gate فعلي بنفس منطق الإنتاج.

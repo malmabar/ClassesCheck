@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-02-24T08:30:40.313428+00:00",
+  "generated_at_utc": "2026-02-24T09:04:22.775613+00:00",
   "release_ready": true,
   "gate": "acceptance_gate",
   "acceptance_report_file": "/Users/malmabar/Documents/MornningClassesCheck/artifacts/acceptance/latest.json",
@@ -8,12 +8,12 @@
     {
       "period": "صباحي",
       "status": "PASSED",
-      "run_id": "7bb37757-3df8-4447-ac5c-091ef04e24e3"
+      "run_id": "99b67ad0-178b-4d47-9364-a196f9bbf5da"
     },
     {
       "period": "مسائي",
       "status": "PASSED",
-      "run_id": "aa51b1f1-ee84-4470-a025-5ff70a3f136f"
+      "run_id": "e1d144a3-df93-496d-a6f3-6666d687fd1f"
     }
   ],
   "health_payload": {

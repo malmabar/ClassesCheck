@@ -745,3 +745,32 @@
    - `main -> origin/main`
 5. حالة التزامن:
    - `## main...origin/main` (متزامن بعد الدفع).
+
+### [W-040] تفعيل Gate إلزامي في GitHub Actions (CI Enforcement)
+1. إضافة Workflow CI جديد:
+   - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+2. نطاق التشغيل:
+   - `pull_request`
+   - `push` على `main`
+   - `push tags` على نمط `v*`
+   - `workflow_dispatch`
+3. ما ينفذه الـWorkflow:
+   - تشغيل خدمة `PostgreSQL`.
+   - تثبيت backend dependencies.
+   - تنفيذ migrations عبر `alembic`.
+   - تشغيل API (`uvicorn`).
+   - تنفيذ gate الإلزامي:
+     - `./scripts/release_with_gate.sh --period all --python-exec "$(which python)"`
+   - رفع artifacts:
+     - `artifacts/acceptance/latest.json`
+     - `artifacts/acceptance/release_ready.json`
+     - `/tmp/uvicorn.log`
+4. تعديل تبعيات backend:
+   - إضافة `openpyxl>=3.1.0` في:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/pyproject.toml`
+   - السبب: `acceptance_gate` يعتمد على `openpyxl` مباشرة.
+5. تحديث دليل التشغيل:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/README.md`
+   - إضافة قسم `CI Enforcement (GitHub Actions)`.
+6. النتيجة:
+   - أصبح gate إلزاميًا أوتوماتيكيًا في CI بدل الاعتماد على التشغيل اليدوي فقط.
