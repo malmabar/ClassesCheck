@@ -576,3 +576,22 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
      - لا failures في `publish_export_regression`.
 4. ما الذي يعنيه هذا لفريق التشغيل:
    - مشاكل `publish/export` ستظهر مبكرًا في CI/Gate قبل أي إصدار فعلي.
+
+## 25) إلغاء تتبع Acceptance Artifacts لتثبيت نظافة الشجرة (تم)
+
+1. المشكلة:
+   - كل تشغيل gate كان يوسّخ `git status` بسبب:
+     - `artifacts/acceptance/latest.json`
+     - `artifacts/acceptance/release_ready.json`
+     - ملفات timestamped و`tmp`.
+2. الإجراء:
+   - إضافة ignore دائم:
+     - `artifacts/acceptance/` في:
+       - `/Users/malmabar/Documents/MornningClassesCheck/.gitignore`
+   - إزالة التتبع الحالي للملفات ضمن المسار:
+     - `git rm -r --cached artifacts/acceptance`
+3. النتيجة:
+   - ملفات القبول أصبحت artifacts تشغيلية فقط وليست جزءًا من git history.
+   - `git status` يبقى نظيفًا بعد تشغيل أدوات gate.
+4. التأثير على CI:
+   - لا تأثير سلبي؛ workflow يرفع artifacts من filesystem مباشرة أثناء التشغيل.

@@ -937,3 +937,21 @@
      - `artifact_registry` أكد تسجيل ملفات `XLSX/PDF`.
 4. الأثر:
    - أي انكسار مستقبلي في publish/export (حتى لو API رجع ملف شكليًا) سيتم كشفه مبكرًا داخل Gate الإلزامي.
+
+### [W-048] تنظيف ضوضاء `artifacts/acceptance` من Git Working Tree
+1. الهدف:
+   - منع اتساخ الشجرة المحلية بعد كل تشغيل gate بسبب ملفات artifacts المتولدة آليًا.
+2. التعديل المنفذ:
+   - تحديث:
+     - `/Users/malmabar/Documents/MornningClassesCheck/.gitignore`
+   - إضافة:
+     - `artifacts/acceptance/`
+3. معالجة التتبع الحالي:
+   - إزالة تتبع الملفات الموجودة داخل:
+     - `artifacts/acceptance/**`
+   - باستخدام:
+     - `git rm -r --cached artifacts/acceptance`
+   - بدون حذف الملفات محليًا.
+4. النتيجة:
+   - ملفات القبول (`latest/release_ready/timestamped/tmp`) لم تعد تظهر كـ`modified/untracked` في كل تشغيل جديد.
+   - عمليات gate ما تزال تعمل طبيعيًا لأنها تقرأ/تكتب الملفات من filesystem وليس من index.

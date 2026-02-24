@@ -6,4 +6,5 @@ __pycache__/
 artifacts/screenshots/
 artifacts/exports/
 artifacts/parity/
+artifacts/acceptance/
 backend/artifacts/parity/
