@@ -316,12 +316,22 @@ def publish_run(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except SQLAlchemyError as exc:
+        db.rollback()
         raise HTTPException(
             status_code=500,
             detail=(
                 "Publish failed بسبب مشكلة قاعدة البيانات "
                 f"({exc.__class__.__name__}). "
                 "تأكد من تنفيذ: alembic -c backend/alembic.ini upgrade head"
+            ),
+        ) from exc
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Publish failed بسبب خطأ غير متوقع "
+                f"({exc.__class__.__name__}): {exc}"
             ),
         ) from exc
     return {
@@ -599,6 +609,7 @@ def download_run_export_xlsx(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except SQLAlchemyError as exc:
+        db.rollback()
         raise HTTPException(
             status_code=500,
             detail=(
@@ -608,9 +619,19 @@ def download_run_export_xlsx(
             ),
         ) from exc
     except OSError as exc:
+        db.rollback()
         raise HTTPException(
             status_code=500,
             detail=f"Excel export failed بسبب مشكلة كتابة الملف: {exc}",
+        ) from exc
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Excel export failed بسبب خطأ غير متوقع "
+                f"({exc.__class__.__name__}): {exc}"
+            ),
         ) from exc
     return FileResponse(
         path=artifact["absolute_path"],
@@ -631,6 +652,7 @@ def download_run_export_pdf(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except SQLAlchemyError as exc:
+        db.rollback()
         raise HTTPException(
             status_code=500,
             detail=(
@@ -640,9 +662,19 @@ def download_run_export_pdf(
             ),
         ) from exc
     except OSError as exc:
+        db.rollback()
         raise HTTPException(
             status_code=500,
             detail=f"PDF export failed بسبب مشكلة كتابة الملف: {exc}",
+        ) from exc
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "PDF export failed بسبب خطأ غير متوقع "
+                f"({exc.__class__.__name__}): {exc}"
+            ),
         ) from exc
     return FileResponse(
         path=artifact["absolute_path"],

@@ -1,5 +1,26 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.41 - 24 فبراير 2026
+
+### الملخص
+تحصين مسارات `publish/export` ضد أخطاء 500 غير المشروحة عبر rollback صريح ومعالجة استثناءات عامة برسائل تشخيصية واضحة.
+
+### أهم التغييرات
+1. تعديل API routes في:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/api/routes/runs.py`
+2. في endpoints التالية:
+   - `POST /api/v1/mc/runs/{run_id}/publish`
+   - `GET /api/v1/mc/runs/{run_id}/export.xlsx`
+   - `GET /api/v1/mc/runs/{run_id}/export.pdf`
+3. إضافة:
+   - `db.rollback()` في مسارات الخطأ.
+   - `except Exception` عام يعيد رسالة مفصلة (`Exception class + message`) بدل `Internal Server Error` العام.
+
+### الأثر على التنفيذ
+1. تحسين قابلية التشخيص المباشر للأخطاء التشغيلية بدل الرسائل العامة.
+2. منع بقاء الجلسة في حالة transaction متعثرة عند حصول exception.
+3. الحفاظ على السلوك الصحيح للحالات المتوقعة (`200` للجاهز و`400` لعدم تحقق preconditions).
+
 ## v1.40 - 24 فبراير 2026
 
 ### الملخص

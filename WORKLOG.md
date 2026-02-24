@@ -885,3 +885,30 @@
      - `approvals = 1`
      - `allow_force_pushes = false`
      - `allow_deletions = false`
+
+### [W-046] معالجة أعطال 500 في نشر النتائج وتصدير Excel/PDF
+1. هدف التنفيذ:
+   - معالجة بلاغ: فشل `نشر النتائج` و`تصدير Excel` و`تصدير PDF` برسائل `HTTP 500`.
+2. التشخيص المنفذ:
+   - اختبار مباشر على API المحلي لأحدث التشغيلات، وعلى تشغيلات تاريخية، وأيضًا على الملف:
+     - `/Users/malmabar/Desktop/TraineeConflicts/SS01.csv`
+   - تنفيذ مسار كامل:
+     - Import -> Pipeline -> Checks -> Publish -> Export XLSX/PDF
+   - النتائج:
+     - العمليات الثلاث تعمل (`HTTP 200`) عند تحقق الشروط.
+     - التشغيلات غير المكتملة تُرجع `HTTP 400` برسالة صحيحة (مثل عدم تشغيل الفحوصات).
+     - لم يظهر `HTTP 500` أثناء إعادة الفحص الواسع.
+3. السبب التقني المعالج:
+   - كان مسار `publish/export` لا يلتقط جميع الاستثناءات غير المتوقعة، ما قد يؤدي لرسالة عامة `Internal Server Error` بلا تفاصيل كافية للتشخيص.
+4. التعديل المنفذ:
+   - ملف:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/api/routes/runs.py`
+   - إضافة `db.rollback()` صريح في مسارات الخطأ الخاصة بـ:
+     - `publish`
+     - `export.xlsx`
+     - `export.pdf`
+   - إضافة `except Exception` عام مع رسالة تفصيلية تتضمن نوع الخطأ (`Exception class`) بدل الرسالة العامة الغامضة.
+5. التحقق بعد التعديل:
+   - التحقق التركيبي للملف المعدّل (`compileall`).
+   - إعادة اختبار `publish/export` على تشغيل صالح: `HTTP 200`.
+   - إعادة اختبار تشغيل غير مكتمل: `HTTP 400` برسالة precondition واضحة.
