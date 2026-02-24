@@ -478,3 +478,25 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
    - تم اعتماد payload متوافق مع repository user-owned.
 4. النتيجة:
    - الحماية أصبحت مشددة فعليًا على `main` وتشمل الحساب الإداري.
+
+## 21) إصدار فعلي بوسم `v1.31.0` (تم)
+
+1. الهدف:
+   - تنفيذ دورة إصدار جديدة بعد إغلاق تحسينات الحوكمة.
+2. التنفيذ:
+   - تشغيل:
+     - `./scripts/release_with_gate.sh --period all --tag v1.31.0`
+3. نتيجة القبول:
+   - `PASSED` للفترتين (`صباحي`/`مسائي`).
+   - تحديث ملفات الإثبات:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/acceptance/latest.json`
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/acceptance/release_ready.json`
+4. نتيجة النشر:
+   - إنشاء الوسم محليًا:
+     - `v1.31.0`
+   - رفع الوسم إلى GitHub:
+     - `git push origin v1.31.0`
+   - التحقق من المرجع على البعيد:
+     - `refs/tags/v1.31.0`
+5. الحالة الحالية:
+   - الفرع المحلي `main` متزامن مع `origin/main`.
