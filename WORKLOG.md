@@ -981,3 +981,32 @@
 4. الأثر:
    - تسهيل إدارة artifacts أثناء التشغيل المتكرر بدون تدخل يدوي.
    - الحفاظ على نفس سلوك gate الأساسي عند عدم تمرير الخيار.
+
+### [W-050] إضافة اختبار تكاملي معزول لخيار تنظيف cache
+1. الهدف:
+   - ضمان أن `--clean-acceptance-cache` يحذف فقط ملفات cache المستهدفة بدون التأثير على ملفات الإثبات الأساسية.
+2. التعديل المنفذ:
+   - إضافة ملف اختبار جديد:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_release_with_gate_cleanup.py`
+   - محتوى الاختبارات:
+     - `test_clean_acceptance_cache_removes_only_generated_files`
+       - يتحقق من حذف:
+         - `artifacts/acceptance/acceptance_*.json`
+         - `artifacts/acceptance/tmp/ss01_from_workbook_*.csv`
+       - ويتأكد من إبقاء:
+         - `latest.json`
+         - `release_ready.json`
+         - أي ملفات غير مطابقة للـpattern.
+     - `test_without_cleanup_flag_does_not_delete_generated_cache`
+       - يتحقق من عدم حذف ملفات cache عند عدم تمرير الخيار.
+3. أسلوب التنفيذ:
+   - الاختبار يعمل داخل بيئة مؤقتة (isolated temp project) مع stub لـ`app.tools.release_readiness_gate`.
+   - يمنع أي تأثير مباشر على ملفات المشروع الحقيقية أثناء الاختبار.
+4. التحقق:
+   - تشغيل:
+     - `.venv/bin/python -m pytest -q backend/tests/test_release_with_gate_cleanup.py`
+   - النتيجة:
+     - `2 passed`
+5. الأثر:
+   - تأمين Regression واضح لسلوك التنظيف.
+   - تقليل احتمال كسر سلوك التنظيف مستقبلًا أثناء تطوير مسار الإصدار.

@@ -615,3 +615,28 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
 4. النتيجة:
    - التنظيف تم قبل gate (مع عدد الملفات المحذوفة).
    - gate مرّ بنجاح (`PASSED`).
+
+## 27) اختبار تكاملي لخيار `--clean-acceptance-cache` (تم)
+
+1. ما تم إضافته:
+   - ملف اختبار جديد:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_release_with_gate_cleanup.py`
+2. ماذا يغطي الاختبار:
+   - حالة تمرير `--clean-acceptance-cache`:
+     - حذف ملفات cache المستهدفة فقط:
+       - `acceptance_*.json`
+       - `tmp/ss01_from_workbook_*.csv`
+     - إبقاء:
+       - `latest.json`
+       - `release_ready.json`
+       - الملفات غير المطابقة للأنماط.
+   - حالة عدم تمرير الخيار:
+     - لا يتم حذف ملفات cache.
+3. أسلوب العزل:
+   - تشغيل داخل مشروع مؤقت (temp root) مع نسخة من `release_with_gate.sh` وstub محلي لـ`release_readiness_gate`.
+   - هذا يمنع أي حذف على artifacts الحقيقية داخل بيئة المستخدم.
+4. التحقق المنفذ:
+   - الأمر:
+     - `.venv/bin/python -m pytest -q backend/tests/test_release_with_gate_cleanup.py`
+   - النتيجة:
+     - `2 passed`.
