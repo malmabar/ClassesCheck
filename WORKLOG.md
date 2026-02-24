@@ -1065,3 +1065,42 @@
      - `4 passed`
 5. الأثر:
    - `total_issues` أصبح أكثر استقرارًا ويمثل التعارضات الفعلية بدون تضخيم slot-by-slot.
+
+### [W-054] تصحيح نهائي: Dedupe التعارضات على مستوى الشعبة بدل الأزواج
+1. الهدف:
+   - منع التضخم التركيبي في `total_issues` عند وجود مجموعات كبيرة متداخلة، مع الحفاظ على تفاصيل التعارض.
+2. المشكلة بعد W-053:
+   - العدّ بالأزواج (`nC2`) خفّض تكرار الـslots لكنه قد يرفع العدد في خلايا كثيفة التداخل مقارنةً بالعدّ التشغيلي المتوقع.
+3. التعديل المنفذ:
+   - تحديث:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/services/check_service.py`
+   - استبدال تجميع الأزواج بدالة:
+     - `_collect_code_conflicts(...)`
+   - السلوك الجديد:
+     - Issue واحدة لكل `code_id` متعارض لكل (entity/day).
+     - تجميع:
+       - `peer_ids`
+       - `slot_indices`
+       داخل `details_json`.
+4. اختبارات:
+   - تحديث:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_check_service_dedupe.py`
+   - تشغيل:
+     - `.venv/bin/python -m pytest -q backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py`
+   - النتيجة:
+     - `4 passed`
+5. تحقق تشغيلي فعلي على SS01:
+   - الملف:
+     - `/Users/malmabar/Desktop/TraineeConflicts/SS01.csv`
+   - `صباحي`:
+     - `total_issues: 763`
+     - `trainer_time_conflict: 9`
+     - `room_time_conflict: 113`
+     - `capacity_exceeded: 641`
+   - `مسائي`:
+     - `total_issues: 221`
+     - `trainer_time_conflict: 216`
+     - `room_time_conflict: 0`
+     - `capacity_exceeded: 5`
+6. الأثر:
+   - الأرقام أصبحت أقل تضخمًا وأكثر قابلية للمراجعة التشغيلية.
