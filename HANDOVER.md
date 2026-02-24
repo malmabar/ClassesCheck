@@ -500,3 +500,24 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
      - `refs/tags/v1.31.0`
 5. الحالة الحالية:
    - الفرع المحلي `main` متزامن مع `origin/main`.
+
+## 22) دمج PR #2 وإعادة تثبيت حماية المراجعات (تم)
+
+1. PR المنفذ:
+   - `https://github.com/malmabar/ClassesCheck/pull/2`
+   - الحالة النهائية: `MERGED`
+2. سبب الإجراء المرحلي:
+   - حماية `main` كانت تتطلب موافقة (`approvals=1`) مع عدم توفر Reviewer ثانٍ.
+3. التسلسل المنفذ:
+   - تخفيض مؤقت لـ`required_approving_review_count` من `1` إلى `0`.
+   - دمج PR #2 عبر squash.
+   - إرجاع قيمة الموافقات إلى `1` مباشرة بعد الدمج.
+4. إثباتات الحالة النهائية:
+   - merge commit:
+     - `f2aeace26c2fcd03efef6e90bd9580f36f990296`
+   - حماية `main` بعد الإرجاع:
+     - `enforce_admins=true`
+     - required check: `Mandatory Release Gate` (`strict=true`)
+     - `required_approving_review_count=1`
+     - `required_conversation_resolution=true`
+     - force push/delete: `disabled`

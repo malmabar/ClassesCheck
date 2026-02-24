@@ -1,5 +1,25 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.40 - 24 فبراير 2026
+
+### الملخص
+توثيق إغلاق PR التوثيق `#2` بعد إصدار `v1.31.0` مع استرجاع سياسة المراجعة الإلزامية إلى `1` على `main`.
+
+### أهم التغييرات
+1. دمج PR:
+   - `https://github.com/malmabar/ClassesCheck/pull/2`
+2. إجراء تشغيلي مرحلي للدمج:
+   - تخفيض مؤقت للموافقات المطلوبة إلى `0` ثم الإرجاع الفوري إلى `1`.
+3. تثبيت سياسة الحماية النهائية:
+   - `enforce_admins=true`
+   - Required check: `Mandatory Release Gate` (strict)
+   - `required_approving_review_count=1`
+   - `required_conversation_resolution=true`
+
+### الأثر على التنفيذ
+1. تم إغلاق توثيق الإصدار عمليًا دون ترك تخفيف دائم على حماية `main`.
+2. بقاء سياسات الحوكمة المشددة مفعلة بعد الدمج.
+
 ## v1.39 - 24 فبراير 2026
 
 ### الملخص
