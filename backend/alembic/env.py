@@ -6,7 +6,7 @@ import sys
 
 from alembic import context
 from dotenv import load_dotenv
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import engine_from_config, pool, text
 
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
@@ -61,6 +61,12 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
+        # Fresh CI databases may not have mc_meta yet while Alembic version table
+        # is configured to live there; create it before migration context bootstraps.
+        connection.execute(
+            text(f"CREATE SCHEMA IF NOT EXISTS {settings.alembic_version_schema}")
+        )
+        connection.commit()
         context.configure(
             connection=connection,
             target_metadata=target_metadata,

@@ -774,3 +774,24 @@
    - إضافة قسم `CI Enforcement (GitHub Actions)`.
 6. النتيجة:
    - أصبح gate إلزاميًا أوتوماتيكيًا في CI بدل الاعتماد على التشغيل اليدوي فقط.
+
+### [W-041] إصلاح فشل CI في خطوة Alembic Migrations
+1. تم التحقق من حالة Workflow على GitHub:
+   - `Release Gate` (run: `22343931189`) كان `failure`.
+   - خطوة الفشل: `Run Migrations`.
+2. الجذر الفني المعالج:
+   - في بيئة CI الجديدة، schema الخاصة بـ Alembic version table (`mc_meta`) قد لا تكون موجودة قبل بدء Alembic context.
+3. الإصلاح المنفذ:
+   - تعديل:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/alembic/env.py`
+   - إضافة إنشاء schema قبل `context.configure`:
+     - `CREATE SCHEMA IF NOT EXISTS mc_meta` (اعتمادًا على `settings.alembic_version_schema`).
+4. تحسين اعتمادية workflow:
+   - تعديل:
+     - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+   - إضافة خطوة `Wait For Postgres` عبر `psycopg.connect` retry قبل تشغيل الهجرات.
+5. التحقق المحلي:
+   - `ast_ok` لملف `backend/alembic/env.py`.
+   - مراجعة workflow YAML بعد التعديل.
+6. الخطوة التالية:
+   - دفع الإصلاح إلى `main` ثم التحقق من run الجديد وأن `conclusion = success`.

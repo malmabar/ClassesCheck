@@ -413,3 +413,23 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
      - `/Users/malmabar/Documents/MornningClassesCheck/backend/pyproject.toml`
 6. النتيجة:
    - أي PR/Push/Tag لا يمر إلا بعد نجاح Gate فعلي بنفس منطق الإنتاج.
+
+## 18) إصلاح فشل CI (Run Migrations) بعد التفعيل
+
+1. الملاحظة:
+   - أول run لـ`Release Gate` على GitHub فشل في خطوة:
+     - `Run Migrations`
+   - run id:
+     - `22343931189`
+2. الإصلاح الأساسي:
+   - ملف:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/alembic/env.py`
+   - قبل تهيئة Alembic context في `online mode` أصبح النظام ينفذ:
+     - `CREATE SCHEMA IF NOT EXISTS <ALEMBIC_VERSION_SCHEMA>`
+   - هذا يمنع فشل البيئات الجديدة عندما لا تكون `mc_meta` موجودة بعد.
+3. تحسين اعتمادية CI:
+   - ملف:
+     - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+   - إضافة خطوة `Wait For Postgres` مع retry عبر `psycopg` قبل `alembic upgrade head`.
+4. الحالة بعد الإصلاح:
+   - التعديلات جاهزة للدفع، والهدف التحقق من run جديد ناجح (`success`) على GitHub Actions.

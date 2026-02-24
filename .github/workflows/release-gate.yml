@@ -56,6 +56,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e backend
 
+      - name: Wait For Postgres
+        run: |
+          python - <<'PY'
+          import time
+          import psycopg
+
+          dsn = "host=127.0.0.1 port=5432 dbname=morning_classes_check user=mc_app password=change_me_with_a_strong_password"
+          last_error = None
+          for _ in range(60):
+              try:
+                  with psycopg.connect(dsn, connect_timeout=3):
+                      print("PostgreSQL is ready.")
+                      raise SystemExit(0)
+              except Exception as exc:
+                  last_error = exc
+                  time.sleep(2)
+          raise SystemExit(f"PostgreSQL readiness timed out: {last_error}")
+          PY
+
       - name: Run Migrations
         run: alembic -c backend/alembic.ini upgrade head
 

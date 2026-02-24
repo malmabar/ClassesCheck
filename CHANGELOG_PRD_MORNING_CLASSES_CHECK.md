@@ -1,5 +1,25 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.34 - 24 فبراير 2026
+
+### الملخص
+إصلاح فشل GitHub Actions في خطوة `Run Migrations` بعد تفعيل Gate الإجباري، مع تعزيز انتظار PostgreSQL قبل Alembic.
+
+### أهم التغييرات
+1. تعديل Alembic bootstrap:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/alembic/env.py`
+   - إضافة إنشاء schema إصدار Alembic تلقائيًا قبل migration context:
+     - `CREATE SCHEMA IF NOT EXISTS <ALEMBIC_VERSION_SCHEMA>`
+2. تعديل Workflow:
+   - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+   - إضافة خطوة `Wait For Postgres` عبر retry باستخدام `psycopg.connect`.
+3. توثيق سبب الإصلاح:
+   - أول run (`22343931189`) فشل في `Run Migrations` على بيئة CI جديدة.
+
+### الأثر على التنفيذ
+1. رفع اعتمادية CI على قواعد بيانات جديدة بدون تجهيز مسبق للـschemas.
+2. تقليل فشل migration الناتج عن سباق جاهزية PostgreSQL.
+
 ## v1.33 - 24 فبراير 2026
 
 ### الملخص
