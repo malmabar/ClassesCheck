@@ -1,5 +1,39 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.55 - 24 فبراير 2026
+
+### الملخص
+إغلاق parity التشغيلي الفعلي على أحدث تشغيلين منشورين (صباحي/مسائي) عبر مقارنة مباشرة للجداول المنشورة مقابل baseline من `SS01.csv`.
+
+### أهم التغييرات
+1. تشغيل parity على:
+   - `run_id=da2552a8-040e-48c1-9010-cfe308ea89c6` (صباحي)
+   - `run_id=de3ee179-3263-4540-b8f3-92e743c4328e` (مسائي)
+2. باستخدام:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/publish_parity_report.py`
+3. حفظ التقارير:
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/parity/latest_morning_compare.json`
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/parity/latest_evening_compare.json`
+
+### التحقق
+1. للفترتين:
+   - `all_match=True`
+2. تطابق كامل للحقول:
+   - `halls_rows`
+   - `crns_rows`
+   - `trainers_rows`
+   - `distribution_rows`
+
+### الأثر على التنفيذ
+1. إغلاق بند parity التشغيلي للجداول الأربع على أحدث runs منشورة.
+2. حصر المتبقي من PRD في مسارات:
+   - RBAC
+   - Run Lifecycle lock/idempotency/retry
+   - PDF Arabic parity
+   - advanced filters
+   - offline assets
+   - API governance المتقدم.
+
 ## v1.54 - 24 فبراير 2026
 
 ### الملخص

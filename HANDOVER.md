@@ -168,23 +168,21 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
 
 ## 7) الأولويات التالية (Next)
 
-1. إعادة اختبار UI مباشرة بعد إصلاح 500:
-   - `نشر النتائج`
-   - `تصدير Excel`
-   - `تصدير PDF`
-   والتأكد أن الاستجابة أصبحت نجاحًا أو رسالة خطأ واضحة غير 500 عام.
-2. تنفيذ مقارنة Parity فعلية على `run_id` المنشور الحالي:
-   - تشغيل:
-     - `python -m app.tools.publish_parity_report --csv-file /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --run-id <RUN_ID>`
-   - إغلاق أي فروقات في `halls/crns/trainers/distribution`.
-3. تحسين محتوى `export.pdf` ليدعم عرضًا عربيًا كاملًا (النسخة الحالية ملخص تشغيلي وظيفي).
-4. اختبار responsive رسمي على دقات قياسية:
-   - 13-inch laptop
-   - 24-inch desktop
-   - 27-inch wide monitor
-   مع توثيق screenshots قبل/بعد.
-5. توسيع فلاتر البحث إلى حقول مخصصة (قسم/مبنى/CRN/مدرب).
-6. تحويل أيقونات Lucide والخط العربي إلى local assets لضمان عمل Offline بالكامل.
+1. تنفيذ RBAC فعلي حسب PRD:
+   - `Admin` (كامل)، `Operator` (استيراد/تشغيل/نشر/تصدير)، `Viewer` (قراءة فقط).
+   - تقييد تنزيل المخرجات المنشورة للأدوار المخولة.
+2. استكمال Run Lifecycle على مستوى البنية:
+   - lock تشغيلي للسياق (`semester + period`) لمنع التشغيل المتوازي.
+   - `idempotency_key` فعلي للتشغيلات المكررة.
+   - retry تلقائي للأخطاء العابرة ضمن سياسة FR-013.
+3. تحسين `export.pdf` لعرض عربي تشغيلي كامل (وليس ملخصًا نصيًا فقط).
+4. توسيع الفلاتر المتقدمة في الشاشات:
+   - قسم/مبنى/CRN/مدرب.
+5. تحويل الأصول إلى local assets:
+   - خط عربي + أيقونات بدل الاعتماد على CDN (Offline readiness).
+6. استكمال حوكمة API:
+   - توحيد صيغة الأخطاء (`code/message/details/trace_id`).
+   - استكمال endpoints غير المنفذة في PRD (`warnings/errors` + مقارنة Runين).
 
 ## 8) قاعدة إلزامية للجلسات القادمة
 
@@ -841,3 +839,27 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
    - تغطية responsive مكتملة الآن للفترتين:
      - `صباحي` (Section 35)
      - `مسائي` (Section 36)
+
+## 37) إغلاق Parity الفعلي على أحدث تشغيلين منشورين (تم)
+
+1. الهدف:
+   - إثبات مطابقة outputs المنشورة على أحدث `run_id` صباحي ومسائي.
+2. التشغيلات:
+   - صباحي:
+     - `da2552a8-040e-48c1-9010-cfe308ea89c6`
+   - مسائي:
+     - `de3ee179-3263-4540-b8f3-92e743c4328e`
+3. أداة المقارنة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/publish_parity_report.py`
+4. التقارير الناتجة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/parity/latest_morning_compare.json`
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/parity/latest_evening_compare.json`
+5. النتيجة:
+   - `all_match=True` للفترتين.
+   - مطابقة كاملة في:
+     - `halls_rows`
+     - `crns_rows`
+     - `trainers_rows`
+     - `distribution_rows`
+6. ملاحظة:
+   - لم يلزم أي تعديل كود في هذه الخطوة؛ كانت خطوة تحقق وإغلاق parity تشغيلي.
