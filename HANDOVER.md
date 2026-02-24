@@ -374,3 +374,16 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
    - `overall_status = PASSED`
    - `صباحي run_id = 7bb37757-3df8-4447-ac5c-091ef04e24e3`
    - `مسائي run_id = aa51b1f1-ee84-4470-a025-5ff70a3f136f`
+
+## 16) نشر GitHub مكتمل
+
+1. remote المضاف:
+   - `origin = git@github.com:malmabar/ClassesCheck.git`
+2. تم نشر الفرع الرئيسي:
+   - `main -> origin/main`
+3. تم نشر الوسوم:
+   - `v1.30.0` مرفوع على المستودع البعيد.
+4. تم ضبط tracking branch محليًا:
+   - `main` يتتبع `origin/main`.
+5. النتيجة التشغيلية:
+   - عملية release + publish + tag أصبحت مكتملة طرف-إلى-طرف داخل GitHub.

@@ -732,3 +732,16 @@
      - `overall_status = PASSED`
      - `صباحي run_id = 7bb37757-3df8-4447-ac5c-091ef04e24e3`
      - `مسائي run_id = aa51b1f1-ee84-4470-a025-5ff70a3f136f`
+
+### [W-039] نشر فعلي إلى GitHub (Branch + Tag)
+1. تم تعريف remote رسمي للمشروع:
+   - `origin = git@github.com:malmabar/ClassesCheck.git`
+2. تم دفع الفرع:
+   - `git push origin main` ✅
+3. تم دفع الوسم:
+   - `git push origin --tags` ✅
+   - `v1.30.0` موجود على GitHub.
+4. تم ضبط تتبع الفرع محليًا:
+   - `main -> origin/main`
+5. حالة التزامن:
+   - `## main...origin/main` (متزامن بعد الدفع).
