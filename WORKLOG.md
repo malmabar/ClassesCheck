@@ -820,3 +820,19 @@
    - قراءة إعدادات الحماية بعد التطبيق أكدت نجاح الضبط بالقيم أعلاه.
 4. الأثر:
    - لا يمكن الدمج إلى `main` إلا بعد نجاح `Release Gate` + مراجعة PR واحدة على الأقل.
+
+### [W-043] منع تجاوز الحماية للحسابات الإدارية
+1. تم تحديث حماية `main` مرة إضافية لتفعيل:
+   - `enforce_admins = true`
+2. تفاصيل الضبط الحالي:
+   - Required check: `Mandatory Release Gate`
+   - `strict = true`
+   - `required_approving_review_count = 1`
+   - `required_conversation_resolution = true`
+   - `allow_force_pushes = false`
+   - `allow_deletions = false`
+   - `enforce_admins = true`
+3. ملاحظة تقنية:
+   - محاولة تضمين `bypass_pull_request_allowances` فشلت بـ`422` لأن المستودع فردي (ليس Organization). تم تطبيق الضبط الصحيح بدون هذا الحقل.
+4. الأثر:
+   - الدفع المباشر إلى `main` لم يعد مسارًا معتمدًا حتى للحساب الإداري؛ المسار الرسمي أصبح عبر PR مع نجاح CI.
