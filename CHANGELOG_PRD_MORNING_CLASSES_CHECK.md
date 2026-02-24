@@ -1,5 +1,27 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.44 - 24 فبراير 2026
+
+### الملخص
+إضافة خيار تنظيف اختياري داخل `release_with_gate.sh` لتصفية cache ملفات القبول قبل تشغيل gate.
+
+### أهم التغييرات
+1. تحديث:
+   - `/Users/malmabar/Documents/MornningClassesCheck/scripts/release_with_gate.sh`
+2. إضافة option جديد:
+   - `--clean-acceptance-cache`
+3. سلوك التنظيف:
+   - حذف:
+     - `artifacts/acceptance/acceptance_*.json`
+     - `artifacts/acceptance/tmp/ss01_from_workbook_*.csv`
+   - إبقاء:
+     - `latest.json`
+     - `release_ready.json`
+
+### الأثر على التنفيذ
+1. تسهيل إدارة artifacts عند التشغيل المتكرر محليًا وداخل جلسات الاختبار الطويلة.
+2. تقليل تراكم الملفات المؤقتة بدون التأثير على مسار gate الأساسي.
+
 ## v1.43 - 24 فبراير 2026
 
 ### الملخص

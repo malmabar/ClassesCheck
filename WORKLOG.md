@@ -955,3 +955,29 @@
 4. النتيجة:
    - ملفات القبول (`latest/release_ready/timestamped/tmp`) لم تعد تظهر كـ`modified/untracked` في كل تشغيل جديد.
    - عمليات gate ما تزال تعمل طبيعيًا لأنها تقرأ/تكتب الملفات من filesystem وليس من index.
+
+### [W-049] إضافة خيار تنظيف اختياري في `release_with_gate.sh`
+1. الهدف:
+   - توفير تنظيف سريع لملفات القبول المتراكمة قبل تشغيل gate عند الحاجة.
+2. التعديل المنفذ:
+   - ملف:
+     - `/Users/malmabar/Documents/MornningClassesCheck/scripts/release_with_gate.sh`
+   - إضافة option جديد:
+     - `--clean-acceptance-cache`
+   - سلوك الخيار:
+     - حذف ملفات:
+       - `artifacts/acceptance/acceptance_*.json`
+       - `artifacts/acceptance/tmp/ss01_from_workbook_*.csv`
+     - مع الإبقاء على:
+       - `latest.json`
+       - `release_ready.json`
+3. التحقق التشغيلي:
+   - تشغيل:
+     - `./scripts/release_with_gate.sh --period صباحي --source-csv /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --semester 144620 --clean-acceptance-cache`
+   - النتيجة:
+     - `Acceptance cache cleanup removed 3 file(s).`
+     - `Release gate PASSED`
+     - مجلد `artifacts/acceptance/tmp` أصبح فارغًا بعد التنظيف.
+4. الأثر:
+   - تسهيل إدارة artifacts أثناء التشغيل المتكرر بدون تدخل يدوي.
+   - الحفاظ على نفس سلوك gate الأساسي عند عدم تمرير الخيار.
