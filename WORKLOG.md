@@ -1235,3 +1235,31 @@
      - مقاس viewport مطابق لكل تشغيل.
 5. الأثر:
    - إغلاق تغطية responsive على الفترتين (`صباحي` + `مسائي`) لنفس أحجام الأجهزة المرجعية.
+
+### [W-060] إغلاق Parity الفعلي للجداول المنشورة على آخر تشغيلين (صباحي/مسائي)
+1. الهدف:
+   - التحقق الحاسم من تطابق المخرجات المنشورة (`halls/crns/trainers/distribution`) مع baseline المتوقع من `SS01.csv`.
+2. التشغيلات المستخدمة:
+   - صباحي:
+     - `run_id = da2552a8-040e-48c1-9010-cfe308ea89c6`
+   - مسائي:
+     - `run_id = de3ee179-3263-4540-b8f3-92e743c4328e`
+3. الأداة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/publish_parity_report.py`
+4. الأوامر المنفذة:
+   - `.venv/bin/python -m app.tools.publish_parity_report --csv-file /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --period صباحي --run-id da2552a8-040e-48c1-9010-cfe308ea89c6 --base-url http://127.0.0.1:8000 --output-file artifacts/parity/latest_morning_compare.json`
+   - `.venv/bin/python -m app.tools.publish_parity_report --csv-file /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --period مسائي --run-id de3ee179-3263-4540-b8f3-92e743c4328e --base-url http://127.0.0.1:8000 --output-file artifacts/parity/latest_evening_compare.json`
+5. النتيجة:
+   - `all_match=True` للفترتين.
+   - صباحي:
+     - `halls=6807`, `crns=6994`, `trainers=6985`, `distribution=40` (مطابقة 100%).
+   - مسائي:
+     - `halls=461`, `crns=461`, `trainers=44`, `distribution=40` (مطابقة 100%).
+6. الأثر:
+   - إغلاق بند parity التشغيلي للجداول الأربع على أحدث run منشور لكل فترة.
+   - أصبح المتبقي في PRD متمركزًا على:
+     - RBAC
+     - lock/idempotency lifecycle
+     - تحسين PDF العربي
+     - filters المتقدمة
+     - offline assets.
