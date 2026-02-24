@@ -1,5 +1,34 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.52 - 24 فبراير 2026
+
+### الملخص
+منع false-failure في `acceptance_gate` عبر تعطيل `excel_cache_parity` تلقائيًا عند تشغيل الـgate بمصدر `--source-csv` خارجي.
+
+### أهم التغييرات
+1. تحديث:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/acceptance_gate.py`
+2. تغيير policy في الـgate:
+   - إذا تم تمرير `--source-csv`:
+     - `excel_cache_parity.checked = false`
+     - تسجيل سبب واضح داخل التقرير.
+   - إذا لم يتم تمرير `--source-csv`:
+     - يبقى فحص `excel_cache_parity` مفعلًا (سلوك workbook baseline).
+3. تحديث تمرير الإعدادات إلى `_run_period_gate` لتمييز حالة الفحص بشكل صريح.
+
+### التحقق
+1. فحص syntax لملف `acceptance_gate.py`: ناجح.
+2. تنفيذ:
+   - `.venv/bin/python -m app.tools.acceptance_gate --base-url http://127.0.0.1:8000 --source-csv /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --semester 144620 --period all --created-by api-user`
+3. النتيجة:
+   - `overall_status: PASSED`
+   - `publish/export xlsx/export pdf` ناجحة للفترتين.
+   - `excel_cache_parity` لم يعد سبب فشل عند المصدر الخارجي.
+
+### الأثر على التنفيذ
+1. إزالة فشل غير تشغيلي كان يمنع تمرير release gate.
+2. الإبقاء على فحص كاش الإكسل فقط في السيناريو الصحيح (source من نفس workbook).
+
 ## v1.51 - 24 فبراير 2026
 
 ### الملخص
