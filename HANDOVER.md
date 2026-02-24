@@ -595,3 +595,23 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
    - `git status` يبقى نظيفًا بعد تشغيل أدوات gate.
 4. التأثير على CI:
    - لا تأثير سلبي؛ workflow يرفع artifacts من filesystem مباشرة أثناء التشغيل.
+
+## 26) خيار تنظيف artifacts داخل release script (تم)
+
+1. ما تم إضافته:
+   - خيار جديد في:
+     - `/Users/malmabar/Documents/MornningClassesCheck/scripts/release_with_gate.sh`
+   - الاسم:
+     - `--clean-acceptance-cache`
+2. وظيفة الخيار:
+   - قبل تشغيل gate يقوم بتنظيف:
+     - `artifacts/acceptance/acceptance_*.json`
+     - `artifacts/acceptance/tmp/ss01_from_workbook_*.csv`
+   - ولا يحذف:
+     - `artifacts/acceptance/latest.json`
+     - `artifacts/acceptance/release_ready.json`
+3. مثال تشغيل موثّق:
+   - `./scripts/release_with_gate.sh --period صباحي --source-csv /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --semester 144620 --clean-acceptance-cache`
+4. النتيجة:
+   - التنظيف تم قبل gate (مع عدد الملفات المحذوفة).
+   - gate مرّ بنجاح (`PASSED`).

@@ -14,6 +14,7 @@ PROOF_FILE="${ROOT_DIR}/artifacts/acceptance/release_ready.json"
 PYTHON_EXEC="${PYTHON_EXEC_DEFAULT}"
 SKIP_HEALTH_CHECK="false"
 TAG_NAME=""
+CLEAN_ACCEPTANCE_CACHE="false"
 
 usage() {
   cat <<'USAGE'
@@ -29,11 +30,13 @@ Options:
   --proof-file <path>          Release proof path
   --python-exec <path>         Python executable (default: .venv/bin/python)
   --skip-health-check          Skip health check
+  --clean-acceptance-cache     Remove generated acceptance cache files before running gate
   --tag <tag-name>             Create annotated git tag after gate success
   -h, --help                   Show this help
 
 Examples:
   scripts/release_with_gate.sh --period all
+  scripts/release_with_gate.sh --period all --clean-acceptance-cache
   scripts/release_with_gate.sh --period all --tag v1.29.0
 USAGE
 }
@@ -72,6 +75,10 @@ while [[ $# -gt 0 ]]; do
       SKIP_HEALTH_CHECK="true"
       shift
       ;;
+    --clean-acceptance-cache)
+      CLEAN_ACCEPTANCE_CACHE="true"
+      shift
+      ;;
     --tag)
       TAG_NAME="$2"
       shift 2
@@ -105,6 +112,22 @@ fi
 
 mkdir -p "$(dirname "${OUTPUT_FILE}")"
 mkdir -p "$(dirname "${PROOF_FILE}")"
+
+if [[ "${CLEAN_ACCEPTANCE_CACHE}" == "true" ]]; then
+  ACCEPTANCE_DIR="${ROOT_DIR}/artifacts/acceptance"
+  ACCEPTANCE_TMP_DIR="${ACCEPTANCE_DIR}/tmp"
+  mkdir -p "${ACCEPTANCE_TMP_DIR}"
+  removed_count=0
+  shopt -s nullglob
+  for path in "${ACCEPTANCE_TMP_DIR}"/ss01_from_workbook_*.csv "${ACCEPTANCE_DIR}"/acceptance_*.json; do
+    if [[ -f "${path}" ]]; then
+      rm -f "${path}"
+      removed_count=$((removed_count + 1))
+    fi
+  done
+  shopt -u nullglob
+  echo "Acceptance cache cleanup removed ${removed_count} file(s)."
+fi
 
 OUTPUT_REL="${OUTPUT_FILE#${ROOT_DIR}/}"
 PROOF_REL="${PROOF_FILE#${ROOT_DIR}/}"
