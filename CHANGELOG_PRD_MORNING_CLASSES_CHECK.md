@@ -1,5 +1,33 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.45 - 24 فبراير 2026
+
+### الملخص
+إضافة اختبار تكاملي معزول يثبت سلوك خيار `--clean-acceptance-cache` ويمنع أي regression في حذف الملفات.
+
+### أهم التغييرات
+1. إضافة اختبارات جديدة في:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_release_with_gate_cleanup.py`
+2. تغطية حالتين أساسيتين:
+   - عند تمرير `--clean-acceptance-cache`:
+     - حذف ملفات:
+       - `artifacts/acceptance/acceptance_*.json`
+       - `artifacts/acceptance/tmp/ss01_from_workbook_*.csv`
+     - إبقاء:
+       - `latest.json`
+       - `release_ready.json`
+       - الملفات غير المطابقة للأنماط.
+   - عند عدم تمرير الخيار:
+     - عدم حذف ملفات cache.
+3. تشغيل تحقق محلي:
+   - `.venv/bin/python -m pytest -q backend/tests/test_release_with_gate_cleanup.py`
+   - النتيجة: `2 passed`
+
+### الأثر على التنفيذ
+1. تثبيت سلوك التنظيف بشكل قابل للقياس والاختبار.
+2. تقليل المخاطر عند تعديل سكربت الإصدار مستقبلًا.
+3. رفع الثقة في أن التنظيف لا يؤثر على ملفات الإثبات الأساسية.
+
 ## v1.44 - 24 فبراير 2026
 
 ### الملخص
