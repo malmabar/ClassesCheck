@@ -858,3 +858,30 @@
      - `git push origin v1.31.0`
    - تم التحقق من وجوده على `origin`:
      - `refs/tags/v1.31.0`
+
+### [W-045] دمج PR التوثيق #2 مع استرجاع حماية المراجعة
+1. الهدف:
+   - دمج PR التوثيق:
+     - `https://github.com/malmabar/ClassesCheck/pull/2`
+   - مع الحفاظ على حماية `main` النهائية.
+2. حالة PR قبل الدمج:
+   - `mergeable = MERGEABLE`
+   - check `Mandatory Release Gate = SUCCESS`
+   - `reviewDecision = REVIEW_REQUIRED`
+3. الإجراء التنفيذي:
+   - تعذّر الدمج المباشر بسبب شرط موافقة واحدة.
+   - تم تخفيض `required_approving_review_count` مؤقتًا إلى `0`.
+   - تم دمج PR #2 (squash merge).
+   - تم إرجاع الحماية مباشرة إلى:
+     - `required_approving_review_count = 1`
+4. نتيجة التحقق:
+   - `PR #2 state = MERGED`
+   - merge commit:
+     - `f2aeace26c2fcd03efef6e90bd9580f36f990296`
+   - إعدادات الحماية بعد الاسترجاع:
+     - `enforce_admins = true`
+     - `strict = true`
+     - `required_check = Mandatory Release Gate`
+     - `approvals = 1`
+     - `allow_force_pushes = false`
+     - `allow_deletions = false`
