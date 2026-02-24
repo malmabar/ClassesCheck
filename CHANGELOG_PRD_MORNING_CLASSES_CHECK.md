@@ -1,5 +1,27 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.42 - 24 فبراير 2026
+
+### الملخص
+رفع `acceptance_gate` إلى Regression API أعمق لمسارات `publish/export` لضمان كشف الأعطال التشغيلية مبكرًا قبل الإصدار.
+
+### أهم التغييرات
+1. تحديث:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/acceptance_gate.py`
+2. إضافة فحوصات إلزامية جديدة:
+   - `publish` مرتين (idempotency).
+   - `export.xlsx` و`export.pdf` مرتين.
+   - التحقق من `content-type` + `content-disposition` + `file_name`.
+   - التحقق من تسجيل artifacts داخل:
+     - `/api/v1/mc/runs/{run_id}/artifacts`
+   - التحقق من parity بين ناتج `publish` وtotals الفعلية في endpoints:
+     - `halls`, `crns`, `trainers`, `distribution`.
+
+### الأثر على التنفيذ
+1. تقليل احتمال مرور CI مع خلل تصدير/نشر غير مكتشف.
+2. تحسين الاعتمادية التشغيلية قبل الوسم والإصدار.
+3. تسريع تشخيص الانكسارات عبر `gate_failures` دقيقة داخل تقرير القبول.
+
 ## v1.41 - 24 فبراير 2026
 
 ### الملخص
