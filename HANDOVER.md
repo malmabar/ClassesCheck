@@ -354,3 +354,23 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
 6. ملفات الإثبات:
    - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/acceptance/latest.json`
    - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/acceptance/release_ready.json`
+
+## 15) إصدار فعلي بوسم `v1.30.0` (تم)
+
+1. تم تنفيذ إصدار فعلي بوسم Git:
+   - `v1.30.0`
+2. التسلسل المنفذ:
+   - تشغيل:
+     - `./scripts/release_with_gate.sh --period all --tag v1.30.0`
+   - Gate مرّ بنجاح للفترتين، وتم إنشاء الوسم.
+3. مشكلتان ظهرتا أثناء التنفيذ وتمت معالجتهما:
+   - لا يوجد `HEAD` (المستودع بلا commits) -> تم إنشاء commit تأسيسي.
+   - رفض الوسم بسبب تغييرات ملفات gate output -> تم تعديل السكربت لتجاهل:
+     - `artifacts/acceptance/latest.json`
+     - `artifacts/acceptance/release_ready.json`
+4. مرجع الوسم:
+   - `v1.30.0 -> 622b58d47ac7d9f6a47e70473fa488ec5ef9de50`
+5. أحدث نتائج القبول المرتبطة بالتنفيذ:
+   - `overall_status = PASSED`
+   - `صباحي run_id = 7bb37757-3df8-4447-ac5c-091ef04e24e3`
+   - `مسائي run_id = aa51b1f1-ee84-4470-a025-5ff70a3f136f`

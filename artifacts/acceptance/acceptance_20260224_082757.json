@@ -1,5 +1,5 @@
 {
-  "generated_at_utc": "2026-02-24T08:30:23.647396+00:00",
+  "generated_at_utc": "2026-02-24T08:27:40.934782+00:00",
   "base_url": "http://127.0.0.1:8000",
   "workbook_file": "/Users/malmabar/Documents/MornningClassesCheck/MorningClassesCheck - Beta6.xlsm",
   "output_file": "/Users/malmabar/Documents/MornningClassesCheck/artifacts/acceptance/latest.json",
@@ -12,7 +12,7 @@
         "import": {
           "message": "SS01 import completed.",
           "result": {
-            "run_id": "7bb37757-3df8-4447-ac5c-091ef04e24e3",
+            "run_id": "710b86e1-9b2b-4cc9-aff4-ededed393ab6",
             "status": "SUCCEEDED",
             "inserted_rows": 3424,
             "rejected_rows": 2,
@@ -24,7 +24,7 @@
         "pipeline": {
           "message": "Pipeline run completed.",
           "result": {
-            "run_id": "7bb37757-3df8-4447-ac5c-091ef04e24e3",
+            "run_id": "710b86e1-9b2b-4cc9-aff4-ededed393ab6",
             "status": "SUCCEEDED",
             "generated_rows": 3189,
             "codes_rows": 3189,
@@ -36,7 +36,7 @@
         "checks_run": {
           "message": "Checks run completed.",
           "result": {
-            "run_id": "7bb37757-3df8-4447-ac5c-091ef04e24e3",
+            "run_id": "710b86e1-9b2b-4cc9-aff4-ededed393ab6",
             "status": "SUCCEEDED",
             "total_issues": 802,
             "trainer_time_conflict": 0,
@@ -62,7 +62,7 @@
         "publish": {
           "message": "Run outputs published successfully.",
           "result": {
-            "run_id": "7bb37757-3df8-4447-ac5c-091ef04e24e3",
+            "run_id": "710b86e1-9b2b-4cc9-aff4-ededed393ab6",
             "status": "PUBLISHED",
             "halls_rows": 6790,
             "crns_rows": 6975,
@@ -73,9 +73,9 @@
         },
         "export_xlsx": {
           "endpoint": "export.xlsx",
-          "size": 748254,
+          "size": 748253,
           "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          "content_disposition": "attachment; filename=\"mc_144620_morning_20260224_083034.xlsx\"",
+          "content_disposition": "attachment; filename=\"mc_144620_morning_20260224_082752.xlsx\"",
           "signature_ok": true,
           "head_hex": "504b030414000000"
         },
@@ -83,12 +83,12 @@
           "endpoint": "export.pdf",
           "size": 993,
           "content_type": "application/pdf",
-          "content_disposition": "attachment; filename=\"mc_144620_morning_20260224_083034.pdf\"",
+          "content_disposition": "attachment; filename=\"mc_144620_morning_20260224_082752.pdf\"",
           "signature_ok": true,
           "head_hex": "255044462d312e34"
         }
       },
-      "run_id": "7bb37757-3df8-4447-ac5c-091ef04e24e3",
+      "run_id": "710b86e1-9b2b-4cc9-aff4-ededed393ab6",
       "gate_failures": []
     },
     {
@@ -98,7 +98,7 @@
         "import": {
           "message": "SS01 import completed.",
           "result": {
-            "run_id": "aa51b1f1-ee84-4470-a025-5ff70a3f136f",
+            "run_id": "8d36a5f8-d99c-4c8d-bb7f-b36765b8f1d3",
             "status": "SUCCEEDED",
             "inserted_rows": 3424,
             "rejected_rows": 2,
@@ -110,7 +110,7 @@
         "pipeline": {
           "message": "Pipeline run completed.",
           "result": {
-            "run_id": "aa51b1f1-ee84-4470-a025-5ff70a3f136f",
+            "run_id": "8d36a5f8-d99c-4c8d-bb7f-b36765b8f1d3",
             "status": "SUCCEEDED",
             "generated_rows": 235,
             "codes_rows": 235,
@@ -122,7 +122,7 @@
         "checks_run": {
           "message": "Checks run completed.",
           "result": {
-            "run_id": "aa51b1f1-ee84-4470-a025-5ff70a3f136f",
+            "run_id": "8d36a5f8-d99c-4c8d-bb7f-b36765b8f1d3",
             "status": "SUCCEEDED",
             "total_issues": 69,
             "trainer_time_conflict": 43,
@@ -149,7 +149,7 @@
         "publish": {
           "message": "Run outputs published successfully.",
           "result": {
-            "run_id": "aa51b1f1-ee84-4470-a025-5ff70a3f136f",
+            "run_id": "8d36a5f8-d99c-4c8d-bb7f-b36765b8f1d3",
             "status": "PUBLISHED",
             "halls_rows": 514,
             "crns_rows": 514,
@@ -160,9 +160,9 @@
         },
         "export_xlsx": {
           "endpoint": "export.xlsx",
-          "size": 65091,
+          "size": 65092,
           "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          "content_disposition": "attachment; filename=\"mc_144620_evening_20260224_083039.xlsx\"",
+          "content_disposition": "attachment; filename=\"mc_144620_evening_20260224_082757.xlsx\"",
           "signature_ok": true,
           "head_hex": "504b030414000000"
         },
@@ -170,20 +170,20 @@
           "endpoint": "export.pdf",
           "size": 989,
           "content_type": "application/pdf",
-          "content_disposition": "attachment; filename=\"mc_144620_evening_20260224_083039.pdf\"",
+          "content_disposition": "attachment; filename=\"mc_144620_evening_20260224_082757.pdf\"",
           "signature_ok": true,
           "head_hex": "255044462d312e34"
         }
       },
-      "run_id": "aa51b1f1-ee84-4470-a025-5ff70a3f136f",
+      "run_id": "8d36a5f8-d99c-4c8d-bb7f-b36765b8f1d3",
       "gate_failures": []
     }
   ],
-  "source_csv": "/Users/malmabar/Documents/MornningClassesCheck/artifacts/acceptance/tmp/ss01_from_workbook_20260224_113023.csv",
+  "source_csv": "/Users/malmabar/Documents/MornningClassesCheck/artifacts/acceptance/tmp/ss01_from_workbook_20260224_112740.csv",
   "source_extraction": {
     "rows_written": 3426,
     "semester": "144620"
   },
   "semester": "144620",
-  "timestamped_report": "/Users/malmabar/Documents/MornningClassesCheck/artifacts/acceptance/acceptance_20260224_083039.json"
+  "timestamped_report": "/Users/malmabar/Documents/MornningClassesCheck/artifacts/acceptance/acceptance_20260224_082757.json"
 }

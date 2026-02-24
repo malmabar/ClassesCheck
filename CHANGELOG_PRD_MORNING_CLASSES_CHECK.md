@@ -1,5 +1,28 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.31 - 24 فبراير 2026
+
+### الملخص
+تنفيذ إصدار فعلي بوسم `v1.30.0` عبر مسار الإصدار الموحّد (`release_with_gate.sh`) بعد تمرير Gate القبول للفترتين.
+
+### أهم التغييرات
+1. تنفيذ tag فعلي:
+   - `v1.30.0`
+   - يشير إلى commit:
+     - `622b58d47ac7d9f6a47e70473fa488ec5ef9de50`
+2. معالجة مشكلة إصدار أولي:
+   - المستودع كان بلا commit (`HEAD` غير موجود) وتم إنشاء commit تأسيسي قبل الوسم.
+3. تحسين سكربت الإصدار:
+   - `/Users/malmabar/Documents/MornningClassesCheck/scripts/release_with_gate.sh`
+   - تجاهل تغييرات ملفات Gate outputs فقط عند فحص نظافة الشجرة قبل `tag`.
+4. تحقق الإصدار:
+   - Gate النهائي للفترتين: `PASSED`
+   - `release_ready.json`: `release_ready=true`, `acceptance_overall_status=PASSED`
+
+### الأثر على التنفيذ
+1. أصبح الإصدار الفعلي بالوسوم يعمل نهاية-لنهاية في هذا المستودع.
+2. تم إغلاق عقبة `first tag on empty history` نهائيًا.
+
 ## v1.30 - 24 فبراير 2026
 
 ### الملخص

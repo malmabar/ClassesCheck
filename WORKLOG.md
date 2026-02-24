@@ -704,3 +704,31 @@
    - run ids:
      - `صباحي: c97c635f-0e0e-4ff6-9c3a-dad7b881d77a`
      - `مسائي: 614f8224-3889-44fb-826d-6daffedd3467`
+
+### [W-038] تنفيذ إصدار فعلي بوسم Git (`v1.30.0`)
+1. المحاولة الأولى للوسم فشلت بسبب عدم وجود `HEAD` صالح:
+   - سبب جذري: المستودع كان بدون commits (`root repo without history`).
+2. معالجة المشكلة:
+   - ضبط `git user.name` و`git user.email` محليًا داخل المستودع.
+   - إنشاء commit تأسيسي:
+     - `f895e40`
+   - ثم commit إصلاح سكربت الوسم:
+     - `622b58d`
+3. مشكلة ثانية تم حلها:
+   - سكربت الوسم كان يرفض tag بعد نجاح الـGate لأن ملفات gate output (`latest.json`, `release_ready.json`) تتحدث تلقائيًا.
+   - تم تعديل:
+     - `/Users/malmabar/Documents/MornningClassesCheck/scripts/release_with_gate.sh`
+   - بحيث يتجاهل تغييرات هذين الملفين فقط عند فحص نظافة الشجرة قبل الوسم.
+4. تنفيذ الإصدار الفعلي:
+   - الأمر:
+     - `cd /Users/malmabar/Documents/MornningClassesCheck && ./scripts/release_with_gate.sh --period all --tag v1.30.0`
+   - النتيجة:
+     - `Tag created: v1.30.0`
+     - `Release gate PASSED`
+5. التحقق النهائي:
+   - الوسم موجود ويرتبط بالـcommit:
+     - `v1.30.0 -> 622b58d47ac7d9f6a47e70473fa488ec5ef9de50`
+   - آخر تشغيل Gate:
+     - `overall_status = PASSED`
+     - `صباحي run_id = 7bb37757-3df8-4447-ac5c-091ef04e24e3`
+     - `مسائي run_id = aa51b1f1-ee84-4470-a025-5ff70a3f136f`
