@@ -1,5 +1,33 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.54 - 24 فبراير 2026
+
+### الملخص
+استكمال تغطية اختبار responsive للفترة المسائية على 13/24/27 إنش بنفس منهج الأدلة البصرية المعتمد.
+
+### أهم التغييرات
+1. تشغيل أداة snapshots على `period=مسائي` لثلاثة مقاسات:
+   - `1280x800`
+   - `1920x1080`
+   - `2560x1440`
+2. حفظ الأدلة في:
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_13in_evening_20260224`
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_24in_evening_20260224`
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/responsive_27in_evening_20260224`
+3. توثيق اكتمال المصفوفة الرسمية للفترتين:
+   - `صباحي` + `مسائي` على 13/24/27.
+
+### التحقق
+1. جميع تشغيلات snapshots انتهت بنجاح.
+2. `meta.json` أكد لكل تشغيل:
+   - `period = مسائي`
+   - `panels = 4`
+   - viewport مطابق.
+
+### الأثر على التنفيذ
+1. إغلاق بند responsive الرسمي عبر الفترتين وليس صباحي فقط.
+2. تأكيد عملي أن النظام يدعم أي مقاس شاشة من خلال viewport parameters.
+
 ## v1.53 - 24 فبراير 2026
 
 ### الملخص
