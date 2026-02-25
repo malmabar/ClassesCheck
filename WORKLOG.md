@@ -1869,3 +1869,28 @@
    - عدم الجاهزية الآن فقط بسبب شرط نافذة الأيام:
      - صباحي: `runs=2`, `days=2/14`, `mismatches=0`
      - مسائي: `runs=2`, `days=2/14`, `mismatches=0`
+
+### [W-077] سكربت تشغيل يومي للـPilot + سجل تاريخي
+1. الهدف:
+   - توفير أمر يومي واحد بسيط لتشغيل تقييم `Pilot/Cutover` بدون أوامر طويلة متكررة.
+2. التعديلات:
+   - إضافة سكربت:
+     - `/Users/malmabar/Documents/MornningClassesCheck/scripts/pilot_cutover_daily.sh`
+   - الميزات:
+     - تشغيل `pilot_cutover_report` بالقيم الافتراضية الصحيحة:
+       - `require_input_checksum_match=true`
+       - `daily_latest_only=true`
+     - طباعة ملخص JSON سريع (`pilot_daily_summary`) بعد كل تشغيل.
+     - إلحاق سطر يومي في:
+       - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/history.log`
+     - خيار `--allow-not-ready` لتشغيل يومي بدون كسر المهمة المجدولة أثناء فترة pilot.
+3. التحقق:
+   - `scripts/pilot_cutover_daily.sh --help` ✅
+   - تشغيل فعلي:
+     - `scripts/pilot_cutover_daily.sh --csv-file /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --allow-not-ready` ✅
+4. نتيجة تشغيل اليوم:
+   - `cutover_ready=false`
+   - صباحي: `days=2/14`, `mismatches=0`
+   - مسائي: `days=2/14`, `mismatches=0`
+   - تمت إضافة سجل يومي إلى:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/history.log`

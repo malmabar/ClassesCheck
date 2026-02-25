@@ -1,5 +1,35 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.72 - 25 فبراير 2026
+
+### الملخص
+إضافة سكربت تشغيل يومي للـPilot لتوحيد التشغيل والمتابعة اليومية، مع سجل تاريخي تلقائي لحالة الجاهزية.
+
+### أهم التغييرات
+1. إضافة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/scripts/pilot_cutover_daily.sh`
+2. قدرات السكربت:
+   - تشغيل `pilot_cutover_report` بإعدادات pilot الافتراضية.
+   - طباعة `pilot_daily_summary` بصيغة JSON.
+   - إلحاق سجل يومي في:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/history.log`
+   - دعم:
+     - `--allow-not-ready`
+     - `--no-require-input-checksum-match`
+     - `--no-daily-latest-only`
+
+### التحقق
+1. `scripts/pilot_cutover_daily.sh --help`
+2. تشغيل فعلي:
+   - `scripts/pilot_cutover_daily.sh --csv-file /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --allow-not-ready`
+3. النتيجة:
+   - التقرير اليومي تم توليده.
+   - تم تحديث history log.
+
+### الأثر على التنفيذ
+1. متابعة pilot اليومية أصبحت عملية بضغطة واحدة.
+2. تسهيل إغلاق PRD Phase 4 ببيانات تاريخية متراكمة قابلة للتدقيق.
+
 ## v1.71 - 25 فبراير 2026
 
 ### الملخص

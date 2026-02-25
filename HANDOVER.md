@@ -1353,3 +1353,23 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
    - الأرقام:
      - صباحي: `runs=2`, `days=2/14`, `mismatches=0`
      - مسائي: `runs=2`, `days=2/14`, `mismatches=0`
+
+## 55) Daily pilot runner script added
+
+1. ما تم إضافته:
+   - سكربت تشغيل يومي:
+     - `/Users/malmabar/Documents/MornningClassesCheck/scripts/pilot_cutover_daily.sh`
+
+2. وظيفة السكربت:
+   - يشغّل `pilot_cutover_report` بإعدادات pilot المعتمدة.
+   - يطبع ملخصًا سريعًا (`pilot_daily_summary`).
+   - يسجل سطر تاريخي لكل تشغيل في:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/history.log`
+
+3. أمر التشغيل اليومي الموصى به:
+   - `scripts/pilot_cutover_daily.sh --csv-file /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --allow-not-ready`
+
+4. حالة اليوم:
+   - صباحي: `days=2/14`, `mismatches=0`
+   - مسائي: `days=2/14`, `mismatches=0`
+   - لا يوجد mismatch، والمتبقي فقط اكتمال نافذة الأيام المطلوبة.
