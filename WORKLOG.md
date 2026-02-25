@@ -1575,3 +1575,169 @@
 5. الأثر:
    - إغلاق بند API Governance بالكامل.
    - بنود PRD التنفيذية الأساسية أصبحت مكتملة (RBAC + lifecycle + PDF + advanced filters + offline assets + governance).
+
+### [W-068] Responsive Gate إلزامي داخل CI (Playwright + Assertions)
+1. الهدف:
+   - تحويل فحص الـResponsive من مراجعة لقطات يدوية إلى Gate إلزامي يوقف الدمج عند كسر العرض.
+2. التعديلات المنفذة:
+   - إضافة أداة جديدة:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/responsive_gate.py`
+   - المزايا:
+     - فحص 4 مقاسات ثابتة:
+       - `mobile_390x844`
+       - `laptop13_1366x768`
+       - `desktop24_1920x1080`
+       - `desktop27_2560x1440`
+     - Assertions على:
+       - صحة توزيع التخطيط (عمودين desktop / عمود واحد mobile).
+       - عرض لوحة التحكم ضمن حدود متوقعة على desktop.
+       - توسّع لوحة التشغيل عند إخفاء التحكم (`controls-hidden`).
+       - حد أدنى لمساحة heatmap ومنع shrink غير منطقي.
+       - منع overflow أفقي مرئي (من جهة اليمين) على الصفحة.
+     - توليد artifacts:
+       - `responsive_report.json`
+       - لقطات شاشة لكل مقاس.
+   - تحديث CSS لمنع تمدد grid item غير المقصود:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+     - إضافة `min-width: 0` على:
+       - `.selected-run`
+       - `.screen-panels`
+       - `.screen-panel`
+       - `.heatmap-wrap`
+   - ربط الـCI:
+     - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+     - إضافة:
+       - تثبيت `playwright` + تنزيل `chromium`.
+       - خطوة `Responsive UI Gate` بعد `Mandatory Gate`.
+       - رفع artifacts من:
+         - `artifacts/responsive/latest`
+   - توثيق التشغيل:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/README.md`
+     - إضافة قسم `Responsive UI Gate (Automation)`.
+3. الاختبارات:
+   - إضافة اختبار منطق قواعد gate:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_responsive_gate_logic.py`
+4. التحقق المنفذ:
+   - `.venv/bin/python -m ruff check backend/app/tools/responsive_gate.py backend/tests/test_responsive_gate_logic.py`
+   - `.venv/bin/python -m pytest -q backend/tests/test_responsive_gate_logic.py`
+   - تشغيل gate فعليًا على السيرفر المحلي:
+     - `../.venv/bin/python -m app.tools.responsive_gate --base-url http://127.0.0.1:8000 --period صباحي --output-dir /Users/malmabar/Documents/MornningClassesCheck/artifacts/responsive/manual_latest`
+   - Regression suite:
+     - `.venv/bin/python -m pytest -q backend/tests/test_runs_advanced_filters_api.py backend/tests/test_rbac_api.py backend/tests/test_run_lifecycle.py backend/tests/test_export_pdf_report.py backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py backend/tests/test_ui_offline_assets.py backend/tests/test_responsive_gate_logic.py`
+   - النتيجة: `42 passed, 1 skipped`.
+5. الأثر:
+   - أي كسر Responsive مستقبلي سيوقف `Mandatory Release Gate` تلقائيًا.
+   - تقليل الاعتماد على لقطات المراجعة اليدوية قبل الدمج.
+
+### [W-069] إصلاح جذري لهيت ماب الاستجابة (منع القص والانقسام)
+1. المشكلة المرصودة:
+   - قص/انزياح أعمدة الهيت ماب يمين/يسار (ظهور أجزاء من اليوم بدل المجموعة كاملة).
+   - ضغط غير متناسق للأعمدة في بعض الحالات بعد إعادة الرسم أو تغيير التبويب.
+2. السبب الجذري:
+   - عرض أعمدة الهيت ماب كان يعتمد فعليًا على حدّ أدنى ناتج من نص التوقيت داخل رأس الجدول.
+   - مع RTL بقي `scrollLeft` بقيمة سالبة صغيرة بعد إعادة الرسم، فنتج قص جزئي للحواف.
+3. التعديلات المنفذة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+     - إضافة `applyHeatmapSizing(...)` لحساب عرض عمود الكيان + عمود الفترة ديناميكيًا من عرض الحاوية.
+     - تحسين `resetHeatmapViewport(...)` بإعادة ضبط RTL على مرحلتين (`requestAnimationFrame`) لمنع بقاء انزياح جزئي.
+     - إعادة رسم الهيت ماب عند:
+       - تغيير حالة إخفاء/إظهار لوحة التحكم.
+       - تغيير حجم الشاشة (debounced resize).
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+     - تثبيت بنية الجدول: `width: max-content`, `min-width: 100%`, `table-layout: fixed`.
+     - تقليل أبعاد fallback للأعمدة.
+     - تصغير واعتماد عرض أكثر انضباطًا لنص أوقات الفترات داخل الهيدر (`.slot-time`) لتفادي تمدد الأعمدة.
+     - توحيد `scrollbar-gutter` إلى `stable` لمنع المساحات المحجوزة غير الضرورية.
+4. التحقق المنفذ:
+   - `node --check backend/app/ui/scripts/dashboard.js`
+   - تحقق Playwright (قياسات حقيقية داخل المتصفح) على تبويبات:
+     - `القاعات`, `الشعب`, `المدربين`, `التوزيع النسبي`.
+   - نتيجة المقاس المستهدف (1512x982):
+     - `overflow = 0` في جميع شاشات العرض الحراري.
+     - `scrollLeft = 0` بعد إعادة الرسم.
+   - تم حفظ لقطات تحقق داخل:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/debug_rooms_after.png`
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/debug_trainers_after_latest.png`
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/tmp_debug_all_after.png`
+5. الأثر:
+   - اختفى قص الحواف الذي كان يظهر أرقام فترات/أجزاء أيام بشكل مبتور.
+   - الهيت ماب أصبح يتكيّف مع عرض الحاوية بشكل أكثر ثباتًا بدل سلوك متغير حسب حالة التمرير السابقة.
+
+### [W-070] استعادة استقرار شاشة التوزيع النسبي + تقليل تأثير التصغير القاسي
+1. المشكلة بعد الجولة السابقة:
+   - شاشة `التوزيع النسبي` أصبحت تُعرض بانزياح أفقي واضح وجزء من الأعمدة يظهر مقصوصًا.
+   - السبب كان اعتماد `distribution-table` على `max-content` مع `min-width` كبير.
+2. المعالجة المنفذة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+     - إعادة `distribution-table` إلى عرض مرن داخل الحاوية:
+       - `width: 100%`
+       - `min-width: 0`
+       - `table-layout: fixed`
+     - إزالة حدود `min-width` الكبيرة في media queries للتوزيع النسبي.
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+     - بعد توليد كتل التوزيع: فرض تموضع أفقي ابتدائي ثابت لكل `.distribution-scroll`.
+     - إضافة `colgroup` في جدول الهيت ماب (القاعات/الشعب/المدربين) لتثبيت عرض الأعمدة بطريقة صريحة.
+     - تحسين معادلة sizing للهيت ماب لتقليل الضغط والقص العرضي.
+3. نتيجة التحقق:
+   - Playwright screenshots:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/fix2_distribution.png`
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/fix2_trainers.png`
+   - القياسات:
+     - التوزيع النسبي: overflow فعلي ~`0-1px` (حدودي وغير بصريًا مكسور).
+     - المدربين: overflow ~`5px` (بدون انقسام يوم أو قص كبير للأعمدة).
+4. المخرجات:
+   - رجوع `التوزيع النسبي` لعرض متماسك (خمس أيام بدون انقطاع واضح).
+   - تقليل أثر التعديلات السابقة التي كانت سببت انحراف/قص بصري.
+
+### [W-071] ضبط ثنائي الحالة (إظهار/إخفاء التحكم) بدون كسر
+1. الهدف:
+   - التوزيع النسبي: تصغير الأرقام عند إظهار التحكم فقط، والرجوع للحجم الأكبر عند إخفائه.
+   - القاعات/الشعب/المدربين: إزالة تداخل أوقات الهيدر عند إظهار التحكم + حل خلل الفترة الثامنة.
+2. التعديلات:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+     - تحسين معادلة `applyHeatmapSizing` لتعويض عرض الحدود (`borderBudget`) ومنع الانزياح 5px.
+     - إضافة `compactTimeLabel`.
+     - في `renderHeatmapTable`:
+       - عند إظهار التحكم: عرض الوقت بصيغة مضغوطة (`0800`) بدل (`08:00`).
+       - عند إخفاء التحكم: الرجوع للصيغة الكاملة (`08:00`).
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+     - منع تداخل نصوص هيدر الجدول عبر `overflow: hidden` على `thead th`.
+     - نمط أصغر لـ `.slot-time` فقط عندما التحكم ظاهر.
+     - نمط أصغر لجدول التوزيع النسبي فقط عندما التحكم ظاهر.
+     - الحفاظ على النمط الأكبر الحالي عندما التحكم مخفي.
+3. التحقق:
+   - `node --check backend/app/ui/scripts/dashboard.js` ✅
+   - Playwright (1512x982) على حالتين:
+     - التحكم ظاهر:
+       - `trainers`: `overflow=0`, `scrollLeft=0`, الوقت = `0800`.
+       - `distribution`: font أصغر.
+     - التحكم مخفي:
+       - `trainers`: `overflow=0`, `scrollLeft=0`, الوقت = `08:00`.
+       - `distribution`: font أكبر (مثل الوضع الحالي المطلوب).
+   - لقطات:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/fix3_trainers_visible_controls.png`
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/fix3_distribution_visible_controls.png`
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/fix3_trainers_hidden_controls.png`
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/fix3_distribution_hidden_controls.png`
+4. النتيجة:
+   - تحقق السلوك الشرطي المطلوب بدقة مع تثبيت شكل الشاشة وعدم كسر الإصلاحات السابقة.
+
+### [W-072] تحسين وضوح أوقات الهيت ماب بدون رجوع التداخل
+1. الطلب:
+   - جعل أوقات الهيدر أوضح في وضع إظهار التحكم، مع الحفاظ على الثبات وعدم رجوع مشكلة التداخل/الفترة الثامنة.
+2. التنفيذ:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+     - تعديل `compactTimeLabel` من صيغة أرقام متصلة (`0800`) إلى صيغة أوضح (`8:00`) في وضع compact.
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+     - رفع بسيط ومدروس لخط `.slot-time` عند controls visible فقط.
+     - الحفاظ على الحجم الطبيعي عند controls hidden كما هو.
+3. التحقق:
+   - `node --check backend/app/ui/scripts/dashboard.js` ✅
+   - قياسات Playwright على القاعات/الشعب/المدربين:
+     - controls visible: `overflow=0`, `scrollLeft=0`, `sampleTime=8:00`.
+     - controls hidden: `overflow=0`, `scrollLeft=0`, `sampleTime=08:00`.
+   - لقطات:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/fix4_visible_controls.png`
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/fix4_hidden_controls.png`
+4. النتيجة:
+   - تحسن وضوح الوقت في الوضع المضغوط بدون كسر الاستقرار أو رجوع التداخل.

@@ -1,5 +1,182 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.67 - 25 فبراير 2026
+
+### الملخص
+تحسين وضوح أوقات هيدر الهيت ماب في وضع إظهار لوحة التحكم، بدون رجوع التداخل أو تأثير جانبي على استقرار القاعات/الشعب/المدربين.
+
+### أهم التغييرات
+1. تحسين تنسيق الوقت المضغوط:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+   - `compactTimeLabel` أصبح يعرض الوقت بصيغة `h:mm` (مثال: `8:00`) بدل أرقام متصلة (`0800`).
+2. تحسين القراءة البصرية:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+   - رفع خط `.slot-time` قليلاً في وضع `controls visible` فقط.
+
+### التحقق
+1. `node --check backend/app/ui/scripts/dashboard.js`
+2. Playwright checks:
+   - controls visible: `overflow=0`, `scrollLeft=0`, `sampleTime=8:00`.
+   - controls hidden: `overflow=0`, `scrollLeft=0`, `sampleTime=08:00`.
+
+### الأثر على التنفيذ
+1. وضوح أعلى للأوقات في وضع الشاشة الضيق (مع لوحة التحكم ظاهرة).
+2. الحفاظ على سلوك العرض المستقر الذي تم إصلاحه في الجولات السابقة.
+
+## v1.66 - 25 فبراير 2026
+
+### الملخص
+تطبيق سلوك بصري شرطي حسب حالة لوحة التحكم: تصغير `التوزيع النسبي` عند إظهار التحكم فقط، وإصلاح تداخل أوقات الهيدر في شاشات القاعات/الشعب/المدربين مع معالجة خلل الفترة الثامنة.
+
+### أهم التغييرات
+1. إصلاح sizing لشاشات الهيت ماب (القاعات/الشعب/المدربين):
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+   - تحديث `applyHeatmapSizing` ليحسب `borderBudget` ويمنع overflow العرضي البسيط.
+2. وقت الهيدر الشرطي:
+   - نفس الملف أعلاه.
+   - عند إظهار التحكم: عرض الوقت مضغوطًا (`0800`).
+   - عند إخفاء التحكم: عرض الوقت الكامل (`08:00`).
+3. منع تداخل نصوص الهيدر:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+   - إضافة `overflow: hidden` على `thead th`.
+4. تصغير التوزيع النسبي فقط مع التحكم الظاهر:
+   - نفس ملف CSS.
+   - `distribution-table` و`th/td` و`totals` يحصلون على خط/حشوة أصغر عند `.bento-grid:not(.controls-hidden)`.
+   - عند `.controls-hidden` يعود الحجم الأكبر الحالي.
+
+### التحقق
+1. `node --check backend/app/ui/scripts/dashboard.js`
+2. Playwright (viewport: 1512x982):
+   - `trainers` (controls visible): `overflow=0`, `scrollLeft=0`, sample time=`0800`.
+   - `trainers` (controls hidden): `overflow=0`, `scrollLeft=0`, sample time=`08:00`.
+   - `distribution`: خط أصغر عند visible وأكبر عند hidden.
+
+### الأثر على التنفيذ
+1. السلوك أصبح مطابقًا لطلب المنتج مع تجنّب كسر الإصلاحات السابقة.
+2. القضاء على تداخل أوقات الهيدر وخلل الفترة الثامنة في وضع التحكم الظاهر.
+
+## v1.65 - 25 فبراير 2026
+
+### الملخص
+استعادة شاشة `التوزيع النسبي` بعد تدهور عرضها، عبر إعادة تصميم جدولها ليملأ الحاوية مباشرة بدل `max-content`، مع تثبيت أعمدة الهيت ماب باستخدام `colgroup` لتقليل السلوك غير المتوقع.
+
+### أهم التغييرات
+1. إصلاح `التوزيع النسبي`:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+   - تحديث:
+     - `.distribution-table` إلى:
+       - `width: 100%`
+       - `min-width: 0`
+       - `table-layout: fixed`
+     - إزالة `min-width` الكبير في media breakpoints لهذه الشاشة.
+2. تثبيت جداول الهيت ماب:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+   - إضافة `colgroup` صريح للأعمدة:
+     - عمود الكيان
+     - أعمدة الفترات
+   - لضبط العرض من المصدر بدل تمدد المحتوى النصي.
+3. تثبيت تموضع scroll لجداول التوزيع:
+   - ضبط موضع البداية لكل `.distribution-scroll` بعد render لتجنب الانزياح الجزئي.
+
+### التحقق
+1. `node --check backend/app/ui/scripts/dashboard.js`
+2. Playwright visual check (1512x982) على:
+   - `المدربين`
+   - `التوزيع النسبي`
+3. النتائج:
+   - `التوزيع النسبي`: عاد متماسكًا (بدون كسر أعمدة الأيام).
+   - `المدربين`: overflow أفقي متبقٍ بسيط جدًا (~5px) غير مسبب لانقسام بصري.
+
+### الأثر على التنفيذ
+1. إلغاء أثر التدهور الذي ظهر في التوزيع النسبي بعد جولات التصغير السابقة.
+2. رفع ثبات جداول الهيت ماب عبر تعريف أعمدة صريح وقابل للضبط.
+
+## v1.64 - 25 فبراير 2026
+
+### الملخص
+إصلاح جذري لاستجابة شاشة الهيت ماب (خصوصًا تبويب المدربين) لمنع قص الحواف وانقسام أعمدة الأيام في RTL، مع ربط مقاسات الأعمدة بعرض الحاوية الفعلي بدل مقاسات ثابتة.
+
+### أهم التغييرات
+1. تحسين منطق العرض الديناميكي للهيت ماب:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+   - إضافة:
+     - `applyHeatmapSizing(...)` لحساب `--slot-col-w` و`--entity-col-w` تلقائيًا حسب عرض الحاوية.
+2. إصلاح نقطة بداية التمرير في RTL بعد إعادة الرسم:
+   - تحسين `resetHeatmapViewport(...)` بإعادة ضبط `scrollLeft/scrollTop` على مرحلتين (مع `requestAnimationFrame`).
+3. تحسين الاستجابة عند تغيّر التخطيط:
+   - إعادة رسم الهيت ماب تلقائيًا عند:
+     - تغيير حالة إخفاء لوحة التحكم.
+     - تغيير حجم الشاشة (resize debounced).
+4. تحسين CSS لمنع ضغط الأعمدة غير المتناسق:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+   - تحديث:
+     - `.heatmap-table` إلى `width: max-content` مع `min-width: 100%` و`table-layout: fixed`.
+     - تقليص fallback widths للأعمدة.
+     - تقليص نمط `.slot-time` لمنع تمدد الأعمدة بسبب نص الوقت.
+     - توحيد `scrollbar-gutter` إلى `stable`.
+
+### التحقق
+1. `node --check backend/app/ui/scripts/dashboard.js`
+2. تحقق متصفح آلي (Playwright) على تبويبات:
+   - `القاعات`
+   - `الشعب`
+   - `المدربين`
+   - `التوزيع النسبي`
+3. نتيجة المقاس المرجعي (1512x982):
+   - `overflow = 0` في جميع تبويبات شاشات العرض الحراري.
+   - `scrollLeft = 0` بعد إعادة الرسم.
+
+### الأثر على التنفيذ
+1. اختفاء القص الجزئي للحواف الذي كان يظهر أجزاء من الأعمدة في بداية/نهاية الجدول.
+2. استقرار أعلى لسلوك الهيت ماب عند تبديل التبويبات وإظهار/إخفاء لوحة التحكم.
+
+## v1.63 - 25 فبراير 2026
+
+### الملخص
+إضافة `Responsive UI Gate` إلزامي داخل CI باستخدام Playwright، مع قواعد تحقق رقمية على 4 مقاسات شاشة، وربطه مباشرة ضمن `Mandatory Release Gate`.
+
+### أهم التغييرات
+1. إضافة أداة Responsive جديدة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/responsive_gate.py`
+   - تشمل:
+     - profiles ثابتة: `mobile_390x844`, `laptop13_1366x768`, `desktop24_1920x1080`, `desktop27_2560x1440`.
+     - Assertions لتوزيع الأعمدة، عرض heatmap، سلوك إخفاء لوحة التحكم، وكشف overflow الأفقي المرئي.
+     - إخراج artifacts:
+       - `responsive_report.json`
+       - screenshots لكل profile.
+2. ربط الـCI:
+   - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+   - إضافة:
+     - تثبيت Playwright (`pip install playwright` + `python -m playwright install chromium`).
+     - خطوة `Responsive UI Gate` بعد `Mandatory Gate`.
+     - رفع:
+       - `artifacts/responsive/latest`
+3. إصلاح CSS داعم للاستجابة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+   - إضافة `min-width: 0` على:
+     - `.selected-run`
+     - `.screen-panels`
+     - `.screen-panel`
+     - `.heatmap-wrap`
+4. إضافة اختبار منطق القواعد:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_responsive_gate_logic.py`
+5. تحديث دليل التشغيل:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/README.md`
+   - إضافة قسم `Responsive UI Gate (Automation)` وربطه مع CI flow.
+
+### التحقق
+1. `.venv/bin/python -m ruff check backend/app/tools/responsive_gate.py backend/tests/test_responsive_gate_logic.py`
+2. `.venv/bin/python -m pytest -q backend/tests/test_responsive_gate_logic.py`
+3. تشغيل gate فعلي:
+   - `../.venv/bin/python -m app.tools.responsive_gate --base-url http://127.0.0.1:8000 --period صباحي --output-dir /Users/malmabar/Documents/MornningClassesCheck/artifacts/responsive/manual_latest`
+4. Regression suite:
+   - `.venv/bin/python -m pytest -q backend/tests/test_runs_advanced_filters_api.py backend/tests/test_rbac_api.py backend/tests/test_run_lifecycle.py backend/tests/test_export_pdf_report.py backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py backend/tests/test_ui_offline_assets.py backend/tests/test_responsive_gate_logic.py`
+5. النتيجة: `42 passed, 1 skipped`.
+
+### الأثر على التنفيذ
+1. فشل Responsive أصبح blocker رسمي في `Mandatory Release Gate`.
+2. تقليل الاعتماد على التحقق اليدوي بالصور قبل الدمج.
+
 ## v1.62 - 25 فبراير 2026
 
 ### الملخص
