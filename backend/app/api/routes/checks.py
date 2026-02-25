@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from app.api.deps.rbac import require_mutation_access
 from app.db.session import get_db
 from app.services.check_service import run_checks_for_run
 
@@ -13,7 +14,11 @@ class RunChecksRequest(BaseModel):
     created_by: str = Field(default="api-user")
 
 
-router = APIRouter(prefix="/api/v1/mc/checks", tags=["mc-checks"])
+router = APIRouter(
+    prefix="/api/v1/mc/checks",
+    tags=["mc-checks"],
+    dependencies=[Depends(require_mutation_access)],
+)
 
 
 @router.post("/run")

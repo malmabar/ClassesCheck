@@ -7,14 +7,9 @@
     <meta
       name="description"
       content="لوحة تشغيل وتحليل الشعب الدراسية مع عرض الملاحظات والتحميلات في تصميم حكومي حديث." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap"
-      rel="stylesheet" />
     <link rel="stylesheet" href="/ui/styles/tokens.css" />
     <link rel="stylesheet" href="/ui/styles/components.css" />
-    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="/ui/scripts/lucide.local.js"></script>
     <script defer src="/ui/scripts/dashboard.js"></script>
   </head>
   <body>
@@ -135,6 +130,38 @@
                     type="search"
                     placeholder="قاعة/شعبة/مدرب..."
                     aria-label="بحث في صفوف الهِيت ماب" />
+                </label>
+                <label class="field field-inline" for="heatmapDepartmentFilter">
+                  <span>القسم</span>
+                  <input
+                    id="heatmapDepartmentFilter"
+                    type="search"
+                    placeholder="اسم/رمز القسم"
+                    aria-label="فلتر القسم" />
+                </label>
+                <label class="field field-inline" for="heatmapBuildingFilter">
+                  <span>المبنى</span>
+                  <input
+                    id="heatmapBuildingFilter"
+                    type="search"
+                    placeholder="رمز المبنى"
+                    aria-label="فلتر المبنى" />
+                </label>
+                <label class="field field-inline" for="heatmapCrnFilter">
+                  <span>CRN</span>
+                  <input
+                    id="heatmapCrnFilter"
+                    type="search"
+                    placeholder="الرقم المرجعي"
+                    aria-label="فلتر الرقم المرجعي" />
+                </label>
+                <label class="field field-inline" for="heatmapTrainerFilter">
+                  <span>المدرب</span>
+                  <input
+                    id="heatmapTrainerFilter"
+                    type="search"
+                    placeholder="اسم/رقم المدرب"
+                    aria-label="فلتر المدرب" />
                 </label>
               </div>
             </div>

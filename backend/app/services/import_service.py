@@ -7,10 +7,12 @@ import json
 from datetime import datetime, timezone
 from typing import Optional
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.run import MCRun, MCRunInputArtifact, MCRunLog, RunStatus
 from app.models.source import MCImportReject, MCSourceSS01Row
+from app.services.run_lifecycle import build_run_idempotency_key, find_latest_idempotent_run
 
 
 REQUIRED_SS01_COLUMNS = [
@@ -79,6 +81,48 @@ def import_ss01_csv(
     checksum = hashlib.sha256(file_bytes).hexdigest()
     decoded_text, encoding = _decode_csv(file_bytes)
     delimiter = _detect_delimiter(decoded_text)
+    normalized_semester = semester.strip()
+    idempotency_key = build_run_idempotency_key(
+        input_checksum=checksum,
+        reference_version="beta6",
+        semester=normalized_semester,
+        period=period,
+        rule_version="v1.1",
+        settings_payload={"source": "SS01"},
+    )
+
+    existing_run = find_latest_idempotent_run(db=db, idempotency_key=idempotency_key)
+    if existing_run is not None:
+        inserted_rows = db.scalar(
+            select(func.count()).select_from(MCSourceSS01Row).where(MCSourceSS01Row.run_id == existing_run.id)
+        ) or 0
+        rejected_rows = db.scalar(
+            select(func.count()).select_from(MCImportReject).where(MCImportReject.run_id == existing_run.id)
+        ) or 0
+        db.add(
+            MCRunLog(
+                run_id=existing_run.id,
+                level="INFO",
+                code="IMPORT_IDEMPOTENT_HIT",
+                message="Skipped duplicate SS01 import due to idempotency key match.",
+                details_json=json.dumps(
+                    {"idempotency_key": idempotency_key, "triggered_by": created_by},
+                    ensure_ascii=False,
+                ),
+            )
+        )
+        db.commit()
+        return {
+            "run_id": existing_run.id,
+            "status": existing_run.status,
+            "inserted_rows": inserted_rows,
+            "rejected_rows": rejected_rows,
+            "checksum": checksum,
+            "encoding": encoding,
+            "delimiter": delimiter,
+            "idempotency_key": idempotency_key,
+            "idempotent_hit": True,
+        }
 
     reader = csv.DictReader(io.StringIO(decoded_text), delimiter=delimiter)
     if not reader.fieldnames:
@@ -90,9 +134,10 @@ def import_ss01_csv(
         raise ValueError(f"Missing required columns: {', '.join(missing_columns)}")
 
     run = MCRun(
-        semester=semester.strip(),
+        semester=normalized_semester,
         period=period,
-        status=RunStatus.VALIDATING.value,
+        status=RunStatus.CREATED.value,
+        idempotency_key=idempotency_key,
         input_checksum=checksum,
         reference_version="beta6",
         rule_version="v1.1",
@@ -123,6 +168,7 @@ def import_ss01_csv(
             ),
         )
     )
+    run.status = RunStatus.VALIDATING.value
     run.status = RunStatus.RUNNING.value
 
     inserted_rows = 0
@@ -222,4 +268,6 @@ def import_ss01_csv(
         "checksum": checksum,
         "encoding": encoding,
         "delimiter": delimiter,
+        "idempotency_key": idempotency_key,
+        "idempotent_hit": False,
     }

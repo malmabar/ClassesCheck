@@ -5,6 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let cachedCodesRows = [];
   let cachedHeatmapRows = [];
   let controlsPanelHidden = false;
+  let selectedRunChecksReady = false;
+  let uiBusy = false;
 
   const DAY_LABEL_BY_ORDER = {
     1: "الأحد",
@@ -133,6 +135,10 @@ document.addEventListener("DOMContentLoaded", () => {
     heatmapPeriodFilter: document.getElementById("heatmapPeriodFilter"),
     heatmapOccupancyFilter: document.getElementById("heatmapOccupancyFilter"),
     heatmapSearchFilter: document.getElementById("heatmapSearchFilter"),
+    heatmapDepartmentFilter: document.getElementById("heatmapDepartmentFilter"),
+    heatmapBuildingFilter: document.getElementById("heatmapBuildingFilter"),
+    heatmapCrnFilter: document.getElementById("heatmapCrnFilter"),
+    heatmapTrainerFilter: document.getElementById("heatmapTrainerFilter"),
     screenTabs: Array.from(document.querySelectorAll(".screen-tab")),
     screenPanels: Array.from(document.querySelectorAll("[data-screen-panel]")),
     roomsSummary: document.getElementById("roomsSummary"),
@@ -278,7 +284,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (!res.ok) {
-      const detail = payload && payload.detail ? payload.detail : `HTTP ${res.status}`;
+      const detail =
+        payload && (payload.detail || payload.message || payload.code)
+          ? payload.detail || payload.message || payload.code
+          : `HTTP ${res.status}`;
       throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
     }
     return payload;
@@ -349,7 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function normalizeArabicText(value) {
-    return String(value || "")
+    return normalizeDigitChars(String(value || ""))
       .normalize("NFKD")
       .replace(/[\u0610-\u061A\u064B-\u065F\u0670]/g, "")
       .replace(/\s+/g, " ")
@@ -661,23 +670,61 @@ document.addEventListener("DOMContentLoaded", () => {
 
     cachedCodesRows = [];
     cachedHeatmapRows = [];
+    selectedRunChecksReady = false;
     clearHeatmapPanels();
+    syncActionButtons();
+  }
+
+  function checksPreconditionMessage(actionLabel) {
+    return `يلزم تشغيل الفحوصات أولًا قبل ${actionLabel}.`;
+  }
+
+  function syncActionButtons() {
+    const hasSelection = Boolean(selectedRunId);
+    const checksReady = hasSelection && selectedRunChecksReady;
+
+    [els.refreshRuns, els.refreshSelected, els.runPipeline, els.runChecks, els.importSs01].forEach((btn) => {
+      if (!btn) return;
+      btn.disabled = uiBusy;
+    });
+
+    if (els.publishRun) {
+      els.publishRun.disabled = uiBusy || !checksReady;
+      const publishHint = !hasSelection
+        ? "اختر تشغيلًا أولًا"
+        : checksReady
+          ? "نشر النتائج"
+          : checksPreconditionMessage("نشر النتائج");
+      els.publishRun.title = publishHint;
+      els.publishRun.setAttribute("aria-label", publishHint);
+    }
+
+    if (els.exportXlsx) {
+      els.exportXlsx.disabled = uiBusy || !checksReady;
+      const xlsxHint = !hasSelection
+        ? "اختر تشغيلًا أولًا"
+        : checksReady
+          ? "تصدير Excel"
+          : checksPreconditionMessage("تصدير Excel");
+      els.exportXlsx.title = xlsxHint;
+      els.exportXlsx.setAttribute("aria-label", xlsxHint);
+    }
+
+    if (els.exportPdf) {
+      els.exportPdf.disabled = uiBusy || !checksReady;
+      const pdfHint = !hasSelection
+        ? "اختر تشغيلًا أولًا"
+        : checksReady
+          ? "تصدير PDF"
+          : checksPreconditionMessage("تصدير PDF");
+      els.exportPdf.title = pdfHint;
+      els.exportPdf.setAttribute("aria-label", pdfHint);
+    }
   }
 
   function setButtonState(isLoading) {
-    [
-      els.refreshRuns,
-      els.refreshSelected,
-      els.runPipeline,
-      els.runChecks,
-      els.publishRun,
-      els.exportXlsx,
-      els.exportPdf,
-      els.importSs01,
-    ].forEach((btn) => {
-      if (!btn) return;
-      btn.disabled = isLoading;
-    });
+    uiBusy = Boolean(isLoading);
+    syncActionButtons();
   }
 
   function parseDownloadName(contentDisposition, fallback = "download.bin") {
@@ -824,9 +871,47 @@ document.addEventListener("DOMContentLoaded", () => {
     return haystack.includes(searchFilter);
   }
 
+  function matchesAdvancedHeatmapFilters(codeRow, filters) {
+    if (filters.department) {
+      const department = normalizeArabicText(codeRow.department || "");
+      if (!department.includes(filters.department)) return false;
+    }
+
+    if (filters.building) {
+      const building = normalizeArabicText(codeRow.building_code || "");
+      if (!building.includes(filters.building)) return false;
+    }
+
+    if (filters.crn) {
+      const crn = normalizeArabicText(codeRow.crn || "");
+      if (!crn.includes(filters.crn)) return false;
+    }
+
+    if (filters.trainer) {
+      const trainerHaystack = normalizeArabicText(
+        [codeRow.trainer_name, codeRow.trainer_job_id].filter(Boolean).join(" "),
+      );
+      if (!trainerHaystack.includes(filters.trainer)) return false;
+    }
+
+    return true;
+  }
+
   function activeHeatmapRows() {
     const searchFilter = normalizeArabicText(els.heatmapSearchFilter?.value || "");
-    return cachedHeatmapRows.filter((row) => matchesPeriodFilter(row) && matchesRowSearchFilter(row, searchFilter));
+    const advancedFilters = {
+      department: normalizeArabicText(els.heatmapDepartmentFilter?.value || ""),
+      building: normalizeArabicText(els.heatmapBuildingFilter?.value || ""),
+      crn: normalizeArabicText(els.heatmapCrnFilter?.value || ""),
+      trainer: normalizeArabicText(els.heatmapTrainerFilter?.value || ""),
+    };
+
+    return cachedHeatmapRows.filter(
+      (row) =>
+        matchesPeriodFilter(row) &&
+        matchesRowSearchFilter(row, searchFilter) &&
+        matchesAdvancedHeatmapFilters(row, advancedFilters),
+    );
   }
 
   function cellKey(dayOrder, slotIndex) {
@@ -1709,6 +1794,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function selectRun(runId) {
     selectedRunId = runId;
+    selectedRunChecksReady = false;
+    syncActionButtons();
     document.querySelectorAll(".run-item").forEach((item) => {
       item.classList.toggle("active", item.dataset.runId === runId);
     });
@@ -1738,6 +1825,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const run = runData.run || {};
       const codesItems = codesData.items || [];
       const issuesItems = issuesData.items || [];
+      selectedRunChecksReady = Boolean(runData?.metrics?.checks_ready);
+      syncActionButtons();
 
       if ((run.period === "صباحي" || run.period === "مسائي") && els.heatmapPeriodFilter) {
         els.heatmapPeriodFilter.value = run.period;
@@ -1762,6 +1851,8 @@ document.addEventListener("DOMContentLoaded", () => {
       renderIssues(issuesItems);
       updateHeatmapSource(codesItems);
     } catch (err) {
+      selectedRunChecksReady = false;
+      syncActionButtons();
       putResult(`فشل تحميل التشغيل المحدد: ${err.message}`, "error");
     }
   }
@@ -1893,6 +1984,10 @@ document.addEventListener("DOMContentLoaded", () => {
       putResult("اختر تشغيلًا أولًا.", "info");
       return;
     }
+    if (!selectedRunChecksReady) {
+      putResult(checksPreconditionMessage("نشر النتائج"), "info");
+      return;
+    }
 
     try {
       setButtonState(true);
@@ -1904,7 +1999,12 @@ document.addEventListener("DOMContentLoaded", () => {
       await loadRuns({ suppressResult: true });
       await loadSelectedRun();
     } catch (err) {
-      putResult(`فشل نشر النتائج: ${err.message}`, "error");
+      const rawMessage = String(err?.message || "");
+      if (rawMessage.includes("Run checks must be executed before publishing")) {
+        putResult(checksPreconditionMessage("نشر النتائج"), "info");
+        return;
+      }
+      putResult(`فشل نشر النتائج: ${rawMessage}`, "error");
     } finally {
       setButtonState(false);
     }
@@ -1916,6 +2016,11 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     const normalizedKind = kind === "pdf" ? "pdf" : "xlsx";
+    if (!selectedRunChecksReady) {
+      const exportLabel = normalizedKind === "pdf" ? "تصدير PDF" : "تصدير Excel";
+      putResult(checksPreconditionMessage(exportLabel), "info");
+      return;
+    }
     const endpoint =
       normalizedKind === "pdf"
         ? `/api/v1/mc/runs/${selectedRunId}/export.pdf`
@@ -1940,10 +2045,16 @@ document.addEventListener("DOMContentLoaded", () => {
       );
       await loadSelectedRun();
     } catch (err) {
+      const rawMessage = String(err?.message || "");
+      if (rawMessage.includes("Run checks must be executed before publishing")) {
+        const exportLabel = normalizedKind === "pdf" ? "تصدير PDF" : "تصدير Excel";
+        putResult(checksPreconditionMessage(exportLabel), "info");
+        return;
+      }
       putResult(
         normalizedKind === "pdf"
-          ? `فشل تصدير PDF: ${err.message}`
-          : `فشل تصدير Excel: ${err.message}`,
+          ? `فشل تصدير PDF: ${rawMessage}`
+          : `فشل تصدير Excel: ${rawMessage}`,
         "error",
       );
     } finally {
@@ -2085,6 +2196,10 @@ document.addEventListener("DOMContentLoaded", () => {
   els.heatmapPeriodFilter?.addEventListener("change", renderHeatmapScreens);
   els.heatmapOccupancyFilter?.addEventListener("change", renderHeatmapScreens);
   els.heatmapSearchFilter?.addEventListener("input", renderHeatmapScreens);
+  els.heatmapDepartmentFilter?.addEventListener("input", renderHeatmapScreens);
+  els.heatmapBuildingFilter?.addEventListener("input", renderHeatmapScreens);
+  els.heatmapCrnFilter?.addEventListener("input", renderHeatmapScreens);
+  els.heatmapTrainerFilter?.addEventListener("input", renderHeatmapScreens);
 
   (async function init() {
     initThemeAndDensity();
@@ -2108,6 +2223,7 @@ document.addEventListener("DOMContentLoaded", () => {
     applyControlsPanelVisibility(savedControlsHidden);
 
     clearHeatmapPanels();
+    setButtonState(false);
     renderLucideIcons();
     setResultMeta("info");
     await refreshHealth();

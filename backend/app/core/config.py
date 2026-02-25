@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     )
     mc_db_schema: str = Field(default="mc_core", alias="MC_DB_SCHEMA")
     mc_meta_schema: str = Field(default="mc_meta", alias="MC_META_SCHEMA")
+    mc_default_role: str = Field(default="operator", alias="MC_DEFAULT_ROLE")
+    mc_run_lock_ttl_seconds: int = Field(default=1800, alias="MC_RUN_LOCK_TTL_SECONDS")
+    mc_transient_retry_count: int = Field(default=1, alias="MC_TRANSIENT_RETRY_COUNT")
 
     database_url: Optional[str] = Field(default=None, alias="DATABASE_URL")
     alembic_database_url: Optional[str] = Field(default=None, alias="ALEMBIC_DATABASE_URL")

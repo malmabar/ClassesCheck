@@ -1,5 +1,13 @@
+@font-face {
+  font-family: "MC Arabic Local";
+  src: url("/ui/assets/fonts/SFArabic.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --font-family-ar: "IBM Plex Sans Arabic", "Tajawal", "Segoe UI", Tahoma, Arial, sans-serif;
+  --font-family-ar: "MC Arabic Local", "Tajawal", "Segoe UI", Tahoma, Arial, sans-serif;
   --font-family-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Consolas, monospace;
 
   --space-1: 0.25rem;

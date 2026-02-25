@@ -26,6 +26,7 @@ class MCRun(Base):
     __table_args__ = (
         Index("ix_mc_run_status", "status"),
         Index("ix_mc_run_created_at", "created_at"),
+        Index("ix_mc_run_idempotency_key", "idempotency_key"),
         {"schema": settings.mc_db_schema},
     )
 
@@ -38,6 +39,7 @@ class MCRun(Base):
     period: Mapped[str] = mapped_column(String(16), nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False)
     rule_version: Mapped[str] = mapped_column(String(32), nullable=False, default="v1.1")
+    idempotency_key: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     input_checksum: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     reference_version: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
