@@ -1281,6 +1281,42 @@ document.addEventListener("DOMContentLoaded", () => {
     return cell;
   }
 
+  function applyHeatmapSizing(table, targetWrap, dayOrders, slots) {
+    if (!table || !targetWrap) return;
+    const dayCount = Array.isArray(dayOrders) ? dayOrders.length : 0;
+    const slotCount = Array.isArray(slots) ? slots.length : 0;
+    const totalSlotCells = dayCount * slotCount;
+    if (!totalSlotCells) return;
+
+    const wrapWidth = Math.floor(targetWrap.clientWidth || targetWrap.getBoundingClientRect().width || 0);
+    if (!wrapWidth) return;
+
+    const borderBudget = totalSlotCells + 2;
+    const usableWidth = Math.max(260, wrapWidth - borderBudget - 8);
+    let entityColWidth = Math.round(Math.max(108, Math.min(188, usableWidth * 0.18)));
+    let slotColWidth = Math.floor((usableWidth - entityColWidth) / totalSlotCells);
+    slotColWidth = Math.max(16, Math.min(22, slotColWidth));
+
+    const consumed = entityColWidth + slotColWidth * totalSlotCells;
+    if (consumed > usableWidth) {
+      entityColWidth = Math.max(102, entityColWidth - (consumed - usableWidth));
+    }
+
+    table.style.setProperty("--entity-col-w", `${entityColWidth}px`);
+    table.style.setProperty("--slot-col-w", `${slotColWidth}px`);
+  }
+
+  function compactTimeLabel(label) {
+    if (!label) return "-";
+    const normalized = String(label).trim();
+    const match = normalized.match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) return normalized;
+    const hour = Number.parseInt(match[1], 10);
+    const minute = match[2];
+    if (!Number.isFinite(hour)) return normalized;
+    return `${hour}:${minute}`;
+  }
+
   function renderHeatmapTable(targetWrap, options) {
     if (!targetWrap) return;
     const { dayOrders, slots, scheduleSlots, rows, entityHeader } = options;
@@ -1293,6 +1329,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const table = document.createElement("table");
     table.className = "heatmap-table";
+    const colgroup = document.createElement("colgroup");
+    const entityCol = document.createElement("col");
+    entityCol.className = "heatmap-col-entity";
+    colgroup.appendChild(entityCol);
+    dayOrders.forEach(() => {
+      slots.forEach(() => {
+        const slotCol = document.createElement("col");
+        slotCol.className = "heatmap-col-slot";
+        colgroup.appendChild(slotCol);
+      });
+    });
+    table.appendChild(colgroup);
 
     const thead = document.createElement("thead");
     const dayRow = document.createElement("tr");
@@ -1310,6 +1358,8 @@ document.addEventListener("DOMContentLoaded", () => {
       acc[row.slot] = row;
       return acc;
     }, {});
+
+    const compactTimes = !controlsPanelHidden;
 
     dayOrders.forEach((dayOrder) => {
       const isAltDay = dayOrder === 2 || dayOrder === 4;
@@ -1329,13 +1379,17 @@ document.addEventListener("DOMContentLoaded", () => {
         slotNumberRow.appendChild(numberTh);
 
         const startTh = document.createElement("th");
-        startTh.className = `slot-header slot-time${isDayStart ? " day-start" : ""}${isAltDay ? " day-alt" : ""}`;
-        startTh.textContent = schedule ? schedule.startLabel : "-";
+        startTh.className = `slot-header slot-time${compactTimes ? " slot-time--compact" : ""}${
+          isDayStart ? " day-start" : ""
+        }${isAltDay ? " day-alt" : ""}`;
+        startTh.textContent = schedule ? (compactTimes ? compactTimeLabel(schedule.startLabel) : schedule.startLabel) : "-";
         slotStartRow.appendChild(startTh);
 
         const endTh = document.createElement("th");
-        endTh.className = `slot-header slot-time${isDayStart ? " day-start" : ""}${isAltDay ? " day-alt" : ""}`;
-        endTh.textContent = schedule ? schedule.endLabel : "-";
+        endTh.className = `slot-header slot-time${compactTimes ? " slot-time--compact" : ""}${
+          isDayStart ? " day-start" : ""
+        }${isAltDay ? " day-alt" : ""}`;
+        endTh.textContent = schedule ? (compactTimes ? compactTimeLabel(schedule.endLabel) : schedule.endLabel) : "-";
         slotEndRow.appendChild(endTh);
       });
     });
@@ -1394,6 +1448,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     table.appendChild(tbody);
     targetWrap.appendChild(table);
+    applyHeatmapSizing(table, targetWrap, dayOrders, slots);
+    resetHeatmapViewport(targetWrap);
+  }
+
+  function resetHeatmapViewport(targetWrap) {
+    if (!targetWrap) return;
+    // Keep a deterministic RTL start point so edge columns are not half-clipped.
+    targetWrap.scrollTop = 0;
+    targetWrap.scrollLeft = 0;
+    requestAnimationFrame(() => {
+      targetWrap.scrollTop = 0;
+      targetWrap.scrollLeft = 0;
+    });
   }
 
   function renderEntityScreen(screenKey, codeRows, entityHeader) {
@@ -1651,6 +1718,14 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
     target.wrap.appendChild(sections);
+    sections.querySelectorAll(".distribution-scroll").forEach((scroller) => {
+      scroller.scrollTop = 0;
+      scroller.scrollLeft = Number.MAX_SAFE_INTEGER;
+      requestAnimationFrame(() => {
+        scroller.scrollLeft = Number.MAX_SAFE_INTEGER;
+      });
+    });
+    resetHeatmapViewport(target.wrap);
   }
 
   function renderHeatmapScreens() {
@@ -2179,6 +2254,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const nextState = !controlsPanelHidden;
     applyControlsPanelVisibility(nextState);
     localStorage.setItem(CONTROLS_PANEL_STORAGE_KEY, String(nextState));
+    renderHeatmapScreens();
+  });
+
+  let heatmapResizeTick = null;
+  window.addEventListener("resize", () => {
+    if (heatmapResizeTick) {
+      window.clearTimeout(heatmapResizeTick);
+    }
+    heatmapResizeTick = window.setTimeout(() => {
+      renderHeatmapScreens();
+    }, 120);
   });
 
   els.globalPeriod.addEventListener("change", async () => {

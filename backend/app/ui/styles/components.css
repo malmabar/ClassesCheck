@@ -183,6 +183,10 @@ body {
   min-height: calc(100vh - 240px);
 }
 
+.selected-run {
+  min-width: 0;
+}
+
 .controls-panel {
   display: grid;
   align-content: start;
@@ -360,11 +364,13 @@ body {
 
 .screen-panels {
   display: grid;
+  min-width: 0;
 }
 
 .screen-panel {
   display: grid;
   gap: var(--space-2);
+  min-width: 0;
 }
 
 .screen-panel[hidden] {
@@ -401,7 +407,8 @@ body {
   background: color-mix(in srgb, var(--panel2) 94%, transparent);
   overflow: auto;
   max-height: 440px;
-  scrollbar-gutter: stable both-edges;
+  min-width: 0;
+  scrollbar-gutter: stable;
 }
 
 .heatmap-empty {
@@ -431,20 +438,27 @@ body {
 
 .heatmap-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  table-layout: auto;
+  min-width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
   direction: rtl;
   font-size: clamp(0.57rem, 0.76vw, var(--fs-chip));
-  min-width: 0;
   --head-row-h: clamp(1.45rem, 1.75vw, 1.95rem);
-  --slot-col-w: clamp(22px, 1.7vw, 30px);
-  --entity-col-w: clamp(150px, 12vw, 210px);
+  --slot-col-w: clamp(18px, 1.25vw, 24px);
+  --entity-col-w: clamp(118px, 10vw, 170px);
+}
+
+.heatmap-table col.heatmap-col-entity {
+  width: var(--entity-col-w);
+}
+
+.heatmap-table col.heatmap-col-slot {
+  width: var(--slot-col-w);
 }
 
 .bento-grid.controls-hidden .heatmap-table {
-  --slot-col-w: clamp(20px, 1.45vw, 27px);
-  --entity-col-w: clamp(140px, 10vw, 180px);
+  --slot-col-w: clamp(18px, 1.15vw, 23px);
+  --entity-col-w: clamp(114px, 9vw, 162px);
 }
 
 .heatmap-table thead th {
@@ -460,6 +474,8 @@ body {
   height: var(--head-row-h);
   line-height: 1.1;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
 }
 
 .heatmap-table thead tr:nth-child(1) th {
@@ -482,6 +498,7 @@ body {
   text-align: right;
   z-index: 5;
   top: 0;
+  inset-inline-start: 0;
   width: var(--entity-col-w);
   min-width: var(--entity-col-w);
   max-width: var(--entity-col-w);
@@ -516,8 +533,21 @@ body {
 }
 
 .heatmap-table .slot-time {
-  font-size: clamp(0.52rem, 0.68vw, 0.71rem);
+  font-size: clamp(0.46rem, 0.58vw, 0.64rem);
+  letter-spacing: 0;
+  padding-inline: 0.04rem;
   color: color-mix(in srgb, var(--accent) 88%, transparent);
+}
+
+.bento-grid:not(.controls-hidden) .heatmap-table .slot-time {
+  font-size: clamp(0.45rem, 0.56vw, 0.62rem);
+  font-weight: 700;
+  letter-spacing: 0;
+  padding-inline: 0.03rem;
+}
+
+.heatmap-table .slot-time.slot-time--compact {
+  font-variant-numeric: tabular-nums;
 }
 
 .heatmap-table .slot-header.day-start {
@@ -687,12 +717,12 @@ body {
 .distribution-scroll {
   overflow-x: auto;
   overflow-y: hidden;
-  scrollbar-gutter: stable both-edges;
+  scrollbar-gutter: stable;
 }
 
 .distribution-table {
   width: 100%;
-  min-width: 720px;
+  min-width: 0;
   border-collapse: collapse;
   table-layout: fixed;
   direction: rtl;
@@ -747,6 +777,24 @@ body {
   font-size: clamp(1.55rem, 2.25vw, 2.2rem);
   font-weight: 900;
   padding-block: 0.42rem;
+}
+
+.bento-grid:not(.controls-hidden) .distribution-table {
+  font-size: clamp(0.5rem, 0.64vw, 0.72rem);
+}
+
+.bento-grid:not(.controls-hidden) .distribution-table th,
+.bento-grid:not(.controls-hidden) .distribution-table td {
+  padding: 0.2rem 0.05rem;
+}
+
+.bento-grid:not(.controls-hidden) .distribution-table .dist-half,
+.bento-grid:not(.controls-hidden) .distribution-table .dist-day-total {
+  font-size: clamp(0.84rem, 1.05vw, 1.06rem);
+}
+
+.bento-grid:not(.controls-hidden) .distribution-table .dist-slot-total {
+  font-size: clamp(1.25rem, 1.7vw, 1.55rem);
 }
 
 .distribution-table .day-start {
@@ -1186,8 +1234,8 @@ body {
   }
 
   .heatmap-table {
-    --slot-col-w: clamp(19px, 1.8vw, 24px);
-    --entity-col-w: clamp(120px, 12vw, 156px);
+    --slot-col-w: clamp(16px, 1.6vw, 22px);
+    --entity-col-w: clamp(110px, 10vw, 150px);
   }
 
   .heatmap-entity-meta {
@@ -1195,7 +1243,7 @@ body {
   }
 
   .distribution-table {
-    min-width: 680px;
+    min-width: 0;
     font-size: clamp(0.56rem, 0.94vw, 0.74rem);
   }
 
@@ -1221,8 +1269,8 @@ body {
   }
 
   .heatmap-table {
-    --slot-col-w: clamp(20px, 2.35vw, 25px);
-    --entity-col-w: clamp(126px, 18vw, 172px);
+    --slot-col-w: clamp(15px, 2.1vw, 21px);
+    --entity-col-w: clamp(108px, 16vw, 150px);
   }
 }
 
@@ -1264,12 +1312,12 @@ body {
   }
 
   .heatmap-table {
-    --slot-col-w: clamp(20px, 4.5vw, 24px);
-    --entity-col-w: clamp(132px, 38vw, 170px);
+    --slot-col-w: clamp(14px, 4vw, 19px);
+    --entity-col-w: clamp(106px, 34vw, 150px);
   }
 
   .distribution-table {
-    min-width: 640px;
+    min-width: 0;
   }
 
   .distribution-table .dist-slot-total {

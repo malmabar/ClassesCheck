@@ -1054,3 +1054,180 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
    - API Governance
 2. الخطوة التالية التشغيلية:
    - دورة إغلاق إصدار (Gate + Tag) إذا رغبت الآن.
+
+## 45) Responsive Gate إلزامي داخل CI (تم)
+
+1. الهدف:
+   - تحويل ضمان الاستجابة (Responsive) إلى فحص آلي إلزامي بدل المراجعة اليدوية فقط.
+2. التنفيذ:
+   - أداة جديدة:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/responsive_gate.py`
+   - فحص viewports:
+     - `mobile_390x844`
+     - `laptop13_1366x768`
+     - `desktop24_1920x1080`
+     - `desktop27_2560x1440`
+   - قواعد gate:
+     - فحص layout desktop/mobile.
+     - التحقق من عرض عمود التحكم وتوسّع اللوحة عند إخفائه.
+     - قياس حد أدنى لمساحة heatmap.
+     - كشف overflow أفقي مرئي على الصفحة.
+   - مخرجات:
+     - `responsive_report.json`
+     - لقطات screenshots لكل profile.
+3. ربط CI:
+   - تحديث:
+     - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+   - إضافة:
+     - `pip install playwright`
+     - `python -m playwright install chromium`
+     - خطوة `Responsive UI Gate` بعد `Mandatory Gate`.
+     - رفع artifacts من:
+       - `artifacts/responsive/latest`
+4. إصلاح مرتبط بالواجهة:
+   - تحديث:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+   - إضافة `min-width: 0` لعناصر grid الحساسة لمنع تمدد غير مقصود:
+     - `.selected-run`, `.screen-panels`, `.screen-panel`, `.heatmap-wrap`
+5. اختبار منطق القواعد:
+   - إضافة:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_responsive_gate_logic.py`
+6. التحقق:
+   - `.venv/bin/python -m ruff check backend/app/tools/responsive_gate.py backend/tests/test_responsive_gate_logic.py`
+   - `.venv/bin/python -m pytest -q backend/tests/test_responsive_gate_logic.py`
+   - تشغيل gate فعلي:
+     - `../.venv/bin/python -m app.tools.responsive_gate --base-url http://127.0.0.1:8000 --period صباحي --output-dir /Users/malmabar/Documents/MornningClassesCheck/artifacts/responsive/manual_latest`
+   - Regression suite:
+     - `.venv/bin/python -m pytest -q backend/tests/test_runs_advanced_filters_api.py backend/tests/test_rbac_api.py backend/tests/test_run_lifecycle.py backend/tests/test_export_pdf_report.py backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py backend/tests/test_ui_offline_assets.py backend/tests/test_responsive_gate_logic.py`
+   - النتيجة: `42 passed, 1 skipped`.
+
+## 46) الحالة الحالية بعد المهمة
+
+1. `Mandatory Release Gate` أصبح يشمل:
+   - Acceptance/Release readiness (المسار الحالي).
+   - Responsive UI gate (مقاسات 13/24/27 + mobile).
+2. أي كسر Responsive جديد سيوقف الدمج تلقائيًا في CI.
+
+## 47) Fix: Heatmap clipping/compression root-cause (RTL + sizing)
+
+1. نطاق الإصلاح:
+   - معالجة سبب قص أعمدة الهيت ماب وانقسام اليوم بصريًا بدل معالجة سطحية.
+
+2. الملفات المعدلة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+
+3. ما تم تنفيذه:
+   - في `dashboard.js`:
+     - إضافة دالة `applyHeatmapSizing` لحساب المقاسات من `targetWrap.clientWidth`.
+     - تحسين `resetHeatmapViewport` لإجبار نقطة بداية RTL بعد الرسم.
+     - إعادة `renderHeatmapScreens` عند:
+       - toggle لوحة التحكم.
+       - resize (debounce 120ms).
+   - في `components.css`:
+     - ضبط هيكل الجدول الحراري إلى `max-content + min-width:100% + fixed layout`.
+     - تخفيض fallback widths للأعمدة.
+     - تقليص نمط نص التوقيت في الهيدر لمنع تمدد عمود الفترة.
+     - توحيد `scrollbar-gutter` إلى `stable`.
+
+4. لماذا هذا الإصلاح صحيح:
+   - قبل الإصلاح كان عرض الأعمدة الفعلي أكبر من المتوقع بسبب min-content للنص داخل رأس الوقت.
+   - هذا خلق overflow أفقي، ومع RTL بقي انزياح صغير (`scrollLeft` سالب) أدى إلى قص حواف الجدول.
+   - بعد الإصلاح تم ربط المقاسات بعرض الحاوية فعليًا + فرض reset موثوق للتمرير.
+
+5. تحقق التنفيذ:
+   - `node --check backend/app/ui/scripts/dashboard.js` ✅
+   - Playwright browser metrics (real layout):
+     - في viewport `1512x982`:
+       - `overflow = 0` لكل تبويبات: `القاعات/الشعب/المدربين/التوزيع النسبي`.
+       - `scrollLeft = 0` بعد الرسم.
+
+6. آثار جانبية/ملاحظات:
+   - على بعض المقاسات المتوسطة جدًا قد يبقى overflow بسيط، لكنه لا يظهر كقص جزئي حرج كما كان سابقًا.
+   - السلوك الحالي يعطي أولوية ثبات الجدول ومنع الانقسام البصري للحواف.
+
+7. مخرجات التحقق (Artifacts):
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/debug_rooms_after.png`
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/debug_trainers_after_latest.png`
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/tmp_debug_all_after.png`
+
+## 48) Recovery: Distribution screen regression rollback + controlled resize
+
+1. لماذا كان هناك تدهور:
+   - جعل `distribution-table` بعرض `max-content` مع `min-width` كبير دفع الجدول للخروج من إطار العرض في لوحة التشغيل الجانبية.
+   - هذا أحدث انزياح/قص بصري في أعمدة الأيام داخل شاشة التوزيع النسبي.
+
+2. ما تم إصلاحه فعليًا:
+   - ملف: `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+     - `distribution-table`:
+       - `width: 100%`
+       - `min-width: 0`
+       - `table-layout: fixed`
+     - إلغاء `min-width` الكبير في media queries للتوزيع.
+   - ملف: `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+     - تثبيت scroll الابتدائي لكل `.distribution-scroll` بعد render.
+     - إضافة `colgroup` لجدول الهيت ماب لتثبيت عرض الأعمدة (entity/slot) بدل الاعتماد على تمدد المحتوى.
+
+3. الحالة بعد الإصلاح:
+   - `التوزيع النسبي`: عاد متماسكًا بدون الانقسام السابق.
+   - `المدربين`: بقي overflow عرضي بسيط جدًا (~5px) لكنه لا يسبب كسرًا بصريًا للهيكل.
+
+4. تحقق سريع:
+   - `node --check backend/app/ui/scripts/dashboard.js` ✅
+   - لقطات:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/fix2_distribution.png`
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/fix2_trainers_after_minus14.png`
+
+5. ملاحظة تقنية:
+   - الـ5px المتبقية في `trainers` ناتجة عن rounding/border math في layout RTL داخل WebKit/Chromium.
+   - يمكن تصفيرها تمامًا بخيارين (إن رغبت):
+     - تقليل عرض عمود الكيان 1-2px إضافية.
+     - أو إزالة حد عمودي واحد من آخر عمود يومي.
+
+## 49) Conditional UI behavior complete (controls shown vs hidden)
+
+1. ما تم تحقيقه:
+   - `التوزيع النسبي`:
+     - عند إظهار لوحة التحكم: أرقام مصغّرة (compact mode).
+     - عند إخفائها: العودة للحجم الأكبر الحالي.
+   - `القاعات/الشعب/المدربين`:
+     - إزالة تداخل أوقات الهيدر في وضع التحكم الظاهر.
+     - حل خلل الفترة الثامنة الناتج عن انزياح عرضي بسيط.
+
+2. الملفات:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+
+3. السبب الجذري الذي تم علاجه:
+   - الانزياح العرضي كان ناتجًا عن عدم احتساب عرض حدود الجدول مع `border-collapse`.
+   - تداخل الأوقات كان بسبب overflow نصوص الهيدر في مساحة صغيرة عند وجود لوحة التحكم.
+
+4. حل التنفيذ:
+   - إدخال `borderBudget` في معادلة sizing.
+   - compact time labels (`0800`) فقط عند controls visible.
+   - overflow clipping للهيدر.
+   - توزيع نسبي compact typography فقط عند controls visible.
+
+5. تحقق نهائي:
+   - `trainers` visible: `overflow=0`, `scrollLeft=0`, `sampleTime=0800`.
+   - `trainers` hidden: `overflow=0`, `scrollLeft=0`, `sampleTime=08:00`.
+   - `distribution` visible: خط أصغر.
+   - `distribution` hidden: خط أكبر (الوضع المرغوب).
+
+## 50) Time-label readability refinement (safe)
+
+1. التعديل:
+   - تحسين عرض الوقت في وضع controls visible من `0800` إلى `8:00`.
+   - رفع حجم خط الوقت بشكل بسيط فقط في هذا الوضع.
+
+2. الملفات:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+
+3. لماذا التعديل آمن:
+   - تم التعديل على presentation فقط، بدون أي مساس بمنطق البيانات أو حسابات الهيت ماب.
+   - تم التحقق أن overflow بقي صفر في القاعات/الشعب/المدربين بالحالتين.
+
+4. نتيجة عملية:
+   - أوضح للمستخدم عند إظهار التحكم.
+   - الشكل الأصلي الأكبر محفوظ عند إخفاء التحكم.
