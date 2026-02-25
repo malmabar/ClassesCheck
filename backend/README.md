@@ -74,6 +74,25 @@ python -m app.tools.ui_snapshots \
 Outputs are saved under:
 - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/screenshots/<timestamp>/`
 
+## Responsive UI Gate (Automation)
+
+Run a responsive guard that validates layout across:
+- mobile `390x844`
+- laptop 13" `1366x768`
+- desktop 24" `1920x1080`
+- desktop 27" `2560x1440`
+
+```bash
+python -m app.tools.responsive_gate \
+  --base-url http://127.0.0.1:8000 \
+  --period صباحي \
+  --output-dir /Users/malmabar/Documents/MornningClassesCheck/artifacts/responsive/latest
+```
+
+Outputs:
+- `/Users/malmabar/Documents/MornningClassesCheck/artifacts/responsive/latest/responsive_report.json`
+- viewport screenshots per profile.
+
 ## Publish Parity Report (SS01 vs Published Run)
 
 Generate expected publish totals from a raw `SS01.csv` and optionally compare them with a specific `run_id`.
@@ -157,4 +176,6 @@ CI flow:
 3. Start API (`uvicorn`).
 4. Execute:
    - `./scripts/release_with_gate.sh --period all --python-exec "$(which python)"`
-5. Upload acceptance artifacts and server log.
+5. Execute responsive gate:
+   - `python -m app.tools.responsive_gate --base-url http://127.0.0.1:8000 --period صباحي --output-dir artifacts/responsive/latest`
+6. Upload acceptance + responsive artifacts and server log.

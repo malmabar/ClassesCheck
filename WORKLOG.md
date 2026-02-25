@@ -1741,3 +1741,28 @@
      - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/fix4_hidden_controls.png`
 4. النتيجة:
    - تحسن وضوح الوقت في الوضع المضغوط بدون كسر الاستقرار أو رجوع التداخل.
+
+### [W-073] ترتيب الدفعة المتبقية (Responsive Gate bundle)
+1. الهدف:
+   - فصل التغييرات المتبقية بعد دمج PR الواجهة في دفعة مستقلة نظيفة.
+2. ما تم ترتيبه:
+   - CI release gate:
+     - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+     - إضافة تثبيت Playwright Chromium + خطوة `Responsive UI Gate` + رفع artifacts الخاصة بها.
+   - أداة الفحص:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/responsive_gate.py`
+   - اختبار المنطق:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_responsive_gate_logic.py`
+   - دليل التشغيل:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/README.md`
+     - توثيق تشغيل responsive gate محليًا وضمن CI.
+3. تنظيف الضوضاء المحلية:
+   - تحديث `.gitignore` لإهمال artifacts المتولدة تلقائيًا:
+     - `artifacts/responsive/`
+     - `artifacts/*.png`
+     - `artifacts/tmp_*.png`
+4. التحقق:
+   - `.venv/bin/python -m ruff check backend/app/tools/responsive_gate.py backend/tests/test_responsive_gate_logic.py` ✅
+   - `.venv/bin/python -m pytest -q backend/tests/test_responsive_gate_logic.py` ✅ (`3 passed`).
+5. النتيجة:
+   - الدفعة المتبقية أصبحت جاهزة للرفع في PR مستقل بدون ملفات artifacts المحلية.
