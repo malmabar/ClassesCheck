@@ -1,5 +1,35 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.73 - 25 فبراير 2026
+
+### الملخص
+تنفيذ دورة تشغيل يومية كاملة للفترتين (`صباحي/مسائي`) وتحديث تقرير الـPilot بعدها مباشرة، مع توثيق أن سبب عدم الجاهزية الحالي هو شرط الأيام فقط.
+
+### أهم التغييرات
+1. تنفيذ تشغيلي عبر API:
+   - `import -> run -> checks -> publish` للفترتين.
+2. النتائج:
+   - صباحي:
+     - `run_id=6bc63c16-6e58-49f4-9ffd-1e29c7cee851`
+     - `total_issues=763`
+     - `status=PUBLISHED`
+   - مسائي:
+     - `run_id=c8d5baa2-75e2-483f-be7a-e02fcb8ffc89`
+     - `total_issues=221`
+     - `status=PUBLISHED`
+3. تحديث Pilot يومي:
+   - `scripts/pilot_cutover_daily.sh --csv-file /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --allow-not-ready`
+   - snapshot:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/pilot_cutover_20260225_055209.json`
+4. توثيق الحالة:
+   - `cutover_ready=false`
+   - صباحي: `days=2/14`, `mismatches=0`
+   - مسائي: `days=2/14`, `mismatches=0`
+
+### الأثر على التنفيذ
+1. تأكيد استقرار مسار التشغيل اليومي للفترتين بنفس بيانات الأساس.
+2. تأكيد أن المتبقي لإغلاق Phase 4 هو استكمال عدد الأيام المطلوبة فقط.
+
 ## v1.72 - 25 فبراير 2026
 
 ### الملخص

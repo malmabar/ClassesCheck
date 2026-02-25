@@ -1373,3 +1373,34 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
    - صباحي: `days=2/14`, `mismatches=0`
    - مسائي: `days=2/14`, `mismatches=0`
    - لا يوجد mismatch، والمتبقي فقط اكتمال نافذة الأيام المطلوبة.
+
+## 56) Daily operation cycle executed (morning + evening) and pilot refreshed
+
+1. ما تم تشغيله:
+   - دورة كاملة للفترتين عبر API:
+     - `import -> run -> checks -> publish`
+
+2. نتائج التشغيل:
+   - صباحي:
+     - `run_id=6bc63c16-6e58-49f4-9ffd-1e29c7cee851`
+     - `idempotent_hit=True`
+     - `total_issues=763`
+     - `status=PUBLISHED`
+   - مسائي:
+     - `run_id=c8d5baa2-75e2-483f-be7a-e02fcb8ffc89`
+     - `idempotent_hit=True`
+     - `total_issues=221`
+     - `status=PUBLISHED`
+
+3. تحديث pilot بعد الدورة:
+   - تشغيل:
+     - `scripts/pilot_cutover_daily.sh --csv-file /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --allow-not-ready`
+   - أحدث snapshot:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/pilot_cutover_20260225_055209.json`
+   - state:
+     - `cutover_ready=false`
+     - صباحي: `days=2/14`, `mismatches=0`
+     - مسائي: `days=2/14`, `mismatches=0`
+
+4. السبب الحالي لعدم الجاهزية:
+   - شرط الأيام فقط (`insufficient_distinct_days`)، وليس أخطاء parity.

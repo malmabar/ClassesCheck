@@ -1894,3 +1894,31 @@
    - مسائي: `days=2/14`, `mismatches=0`
    - تمت إضافة سجل يومي إلى:
      - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/history.log`
+
+### [W-078] دورة تشغيل يومية كاملة للفترتين + تحديث Pilot
+1. الهدف:
+   - تنفيذ دورة اليوم التشغيلية كاملة (`import -> run -> checks -> publish`) للفترتين، ثم تحديث تقرير `Pilot/Cutover`.
+2. التنفيذ:
+   - الفترة `صباحي`:
+     - `import.run_id=6bc63c16-6e58-49f4-9ffd-1e29c7cee851` (`idempotent_hit=True`)
+     - `checks.total_issues=763`
+     - `publish.status=PUBLISHED`
+   - الفترة `مسائي`:
+     - `import.run_id=c8d5baa2-75e2-483f-be7a-e02fcb8ffc89` (`idempotent_hit=True`)
+     - `checks.total_issues=221`
+     - `publish.status=PUBLISHED`
+3. تحديث Pilot اليومي:
+   - تشغيل:
+     - `scripts/pilot_cutover_daily.sh --csv-file /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --allow-not-ready`
+   - المخرجات:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/latest.json`
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/pilot_cutover_20260225_055209.json`
+     - تحديث:
+       - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/history.log`
+4. النتيجة:
+   - `cutover_ready=false`
+   - صباحي: `days=2/14`, `mismatches=0`
+   - مسائي: `days=2/14`, `mismatches=0`
+5. ملاحظة تشغيلية:
+   - ظهور `idempotent_hit=True` يعني استيراد اليوم أعاد استخدام نفس run المعتمد لنفس checksum/settings.
+   - عدم زيادة `days` داخل نفس اليوم متوقع مع منهج `latest-per-day`.
