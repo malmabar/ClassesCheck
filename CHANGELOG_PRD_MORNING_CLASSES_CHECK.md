@@ -1,5 +1,33 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.71 - 25 فبراير 2026
+
+### الملخص
+تصحيح منهج تقييم الـPilot ليطابق التشغيل الواقعي: اعتماد آخر تشغيل منشور لكل يوم، واحتساب الأيام على التاريخ المحلي بدل UTC.
+
+### أهم التغييرات
+1. تحديث:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/pilot_cutover_report.py`
+2. إضافة خيار:
+   - `--daily-latest-only` (افتراضي true)
+   - `--no-daily-latest-only`
+3. تصحيح عدّ الأيام:
+   - `distinct_days` أصبح يعتمد `created_at` المحلي، وليس يوم UTC.
+4. تحديث الاختبارات:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_pilot_cutover_report_logic.py`
+5. تحديث التوثيق:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/README.md`
+
+### التحقق
+1. `.venv/bin/python -m ruff check backend/app/tools/pilot_cutover_report.py backend/tests/test_pilot_cutover_report_logic.py`
+2. `.venv/bin/python -m pytest -q backend/tests/test_pilot_cutover_report_logic.py`
+3. تشغيل فعلي للتقرير:
+   - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/latest.json`
+
+### الأثر على التنفيذ
+1. اختفاء mismatch المرحلي (0 mismatches للفترتين ضمن نطاق pilot الحالي).
+2. معيار عدم الجاهزية الحالي أصبح واضحًا وصحيحًا: استكمال تغطية أيام نافذة 2-4 أسابيع.
+
 ## v1.70 - 25 فبراير 2026
 
 ### الملخص

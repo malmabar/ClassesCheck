@@ -1327,3 +1327,29 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
    - سبب عدم الجاهزية الآن هو:
      - تغطية أيام pilot غير كافية (لسا نافذة 2-4 أسابيع ما اكتملت).
      - mismatch تاريخي واحد ضمن نفس checksum scope.
+
+## 54) Pilot report aligned with real operations (latest-per-day + local-day counting)
+
+1. ما تم تصحيحه:
+   - القرار صار يعتمد آخر run منشور لكل يوم (بدل كل محاولات اليوم).
+   - عد الأيام صار على اليوم المحلي من `created_at` وليس UTC.
+
+2. الملفات:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/pilot_cutover_report.py`
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_pilot_cutover_report_logic.py`
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/README.md`
+
+3. خيارات CLI الجديدة:
+   - `--daily-latest-only` (افتراضي true)
+   - `--no-daily-latest-only`
+
+4. نتيجة التشغيل الحالية بعد التصحيح:
+   - report:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/latest.json`
+   - الحالة:
+     - `cutover_ready=false`
+   - السبب الوحيد المتبقي:
+     - `insufficient_distinct_days`
+   - الأرقام:
+     - صباحي: `runs=2`, `days=2/14`, `mismatches=0`
+     - مسائي: `runs=2`, `days=2/14`, `mismatches=0`

@@ -1842,3 +1842,30 @@
 6. أثر التعديل:
    - التقرير الآن يقيس جودة الـPilot على نفس بيانات الإدخال فعليًا.
    - بقاء عدم الجاهزية حاليًا منطقي (نقص أيام تشغيل + mismatch تاريخي واحد داخل نفس checksum scope).
+
+### [W-076] تصحيح منهج Pilot ليعتمد آخر تشغيل يومي + اليوم المحلي
+1. الهدف:
+   - إزالة تأثير التشغيلات المرحلية داخل نفس اليوم من قرار الـPilot.
+   - منع إنقاص عدد الأيام بسبب تحويل timestamps إلى UTC عند العد.
+2. التعديلات:
+   - تحديث:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/pilot_cutover_report.py`
+   - إضافة:
+     - `--daily-latest-only` (افتراضي true): تقييم آخر run منشور لكل يوم فقط.
+     - `--no-daily-latest-only`: تمكين تحليل كل التشغيلات التاريخية عند الحاجة.
+   - تصحيح عد الأيام:
+     - العد أصبح على **اليوم المحلي** من `created_at` بدل يوم UTC.
+3. الاختبارات:
+   - تحديث:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_pilot_cutover_report_logic.py`
+     - إضافة اختبار `latest_run_per_day` + ضبط سلوك التاريخ المحلي.
+4. التحقق:
+   - `.venv/bin/python -m ruff check backend/app/tools/pilot_cutover_report.py backend/tests/test_pilot_cutover_report_logic.py` ✅
+   - `.venv/bin/python -m pytest -q backend/tests/test_pilot_cutover_report_logic.py` ✅ (`8 passed`).
+   - تشغيل فعلي للتقرير:
+     - `../.venv/bin/python -m app.tools.pilot_cutover_report --csv-file /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --period all --accepted-statuses PUBLISHED --min-distinct-days 14 --output-file /Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/latest.json`
+5. النتيجة:
+   - `mismatch` أصبح صفرًا للفترتين.
+   - عدم الجاهزية الآن فقط بسبب شرط نافذة الأيام:
+     - صباحي: `runs=2`, `days=2/14`, `mismatches=0`
+     - مسائي: `runs=2`, `days=2/14`, `mismatches=0`

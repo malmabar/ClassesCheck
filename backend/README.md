@@ -127,6 +127,7 @@ python -m app.tools.pilot_cutover_report \
   --period all \
   --accepted-statuses PUBLISHED \
   --require-input-checksum-match \
+  --daily-latest-only \
   --min-distinct-days 14 \
   --output-file /Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/latest.json
 ```
@@ -135,6 +136,9 @@ Notes:
 - By default, runs are filtered to the same `input_checksum` of the provided CSV.
 - Disable this only for broad historical audits:
   - `--no-require-input-checksum-match`
+- By default, the report evaluates only the latest published run per local day.
+- Disable this only for deep forensic history:
+  - `--no-daily-latest-only`
 
 Exit code policy:
 - `0` => `cutover_ready=true`

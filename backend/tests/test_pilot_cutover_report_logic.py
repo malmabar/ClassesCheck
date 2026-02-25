@@ -4,6 +4,7 @@ from app.tools.pilot_cutover_report import (
     _evaluate_period,
     _filter_runs_by_status,
     _filter_runs_by_checksum,
+    _latest_run_per_day,
     _parse_created_at,
     _split_statuses,
 )
@@ -49,6 +50,16 @@ def test_filter_runs_by_checksum_respects_requirement_flag() -> None:
         require_match=False,
     )
     assert [item["id"] for item in unscoped] == ["a", "b", "c"]
+
+
+def test_latest_run_per_day_keeps_most_recent_entry_only() -> None:
+    rows = [
+        {"id": "r1", "created_at": "2026-02-25T01:00:00+03:00"},
+        {"id": "r2", "created_at": "2026-02-25T03:00:00+03:00"},
+        {"id": "r3", "created_at": "2026-02-24T22:00:00+03:00"},
+    ]
+    scoped = _latest_run_per_day(rows)
+    assert [item["id"] for item in scoped] == ["r2", "r3"]
 
 
 def test_evaluate_period_passes_when_days_and_parity_are_ok() -> None:

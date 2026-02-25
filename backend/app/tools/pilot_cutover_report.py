@@ -47,7 +47,7 @@ def _parse_created_at(value: Any) -> Optional[datetime]:
         return None
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
+    return parsed
 
 
 def _split_statuses(value: str) -> Tuple[str, ...]:
@@ -103,6 +103,29 @@ def _filter_runs_by_checksum(
     ]
 
 
+def _latest_run_per_day(runs: Sequence[dict]) -> List[dict]:
+    latest_by_day: dict[str, dict] = {}
+    for item in runs:
+        created = _parse_created_at(item.get("created_at"))
+        if created is None:
+            continue
+        day_key = created.date().isoformat()
+        current = latest_by_day.get(day_key)
+        if current is None:
+            latest_by_day[day_key] = item
+            continue
+        current_dt = _parse_created_at(current.get("created_at"))
+        if current_dt is None or created > current_dt:
+            latest_by_day[day_key] = item
+
+    ordered = sorted(
+        latest_by_day.values(),
+        key=lambda row: _parse_created_at(row.get("created_at")) or datetime.min.replace(tzinfo=timezone.utc),
+        reverse=True,
+    )
+    return ordered
+
+
 def _build_run_report(
     *,
     base_url: str,
@@ -119,7 +142,7 @@ def _build_run_report(
         "semester": run_item.get("semester"),
         "period": run_item.get("period"),
         "created_at": created_at_raw,
-        "created_at_utc": created_at.isoformat() if created_at else None,
+        "created_at_utc": created_at.astimezone(timezone.utc).isoformat() if created_at else None,
         "all_match": False,
         "comparison": None,
         "error": None,
@@ -143,7 +166,7 @@ def _evaluate_period(period: str, run_reports: Sequence[dict], min_distinct_days
         {
             dt.date().isoformat()
             for dt in (
-                _parse_created_at(item.get("created_at_utc") or item.get("created_at"))
+                _parse_created_at(item.get("created_at") or item.get("created_at_utc"))
                 for item in run_reports
             )
             if dt is not None
@@ -210,6 +233,12 @@ def parse_args() -> argparse.Namespace:
             "Limit runs to those whose input_checksum matches the provided csv-file checksum "
             "(default: true)."
         ),
+    )
+    parser.add_argument(
+        "--daily-latest-only",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Evaluate only the latest run per day (default: true).",
     )
     parser.add_argument(
         "--min-distinct-days",
@@ -301,7 +330,12 @@ def main() -> int:
             expected_checksum=expected_checksum,
             require_match=bool(args.require_input_checksum_match),
         )
-        selected_runs = checksum_scoped[: int(args.max_runs_per_period)]
+        pilot_scope = (
+            _latest_run_per_day(checksum_scoped)
+            if bool(args.daily_latest_only)
+            else list(checksum_scoped)
+        )
+        selected_runs = pilot_scope[: int(args.max_runs_per_period)]
 
         run_reports = [
             _build_run_report(
@@ -322,6 +356,8 @@ def main() -> int:
         period_summary["total_runs_fetched"] = len(all_runs)
         period_summary["total_runs_in_scope"] = len(in_scope)
         period_summary["total_runs_checksum_scoped"] = len(checksum_scoped)
+        period_summary["total_runs_pilot_scope"] = len(pilot_scope)
+        period_summary["daily_latest_only"] = bool(args.daily_latest_only)
         period_summary["checksum_filter_enabled"] = bool(args.require_input_checksum_match)
         period_summary["expected_input_checksum"] = expected_checksum
         period_summary["runs"] = run_reports
@@ -341,6 +377,7 @@ def main() -> int:
             "period": args.period,
             "accepted_statuses": list(args.accepted_statuses),
             "require_input_checksum_match": bool(args.require_input_checksum_match),
+            "daily_latest_only": bool(args.daily_latest_only),
             "expected_input_checksum": expected_checksum,
             "min_distinct_days": int(args.min_distinct_days),
             "max_runs_per_period": int(args.max_runs_per_period),
