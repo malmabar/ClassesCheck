@@ -1231,3 +1231,30 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
 4. نتيجة عملية:
    - أوضح للمستخدم عند إظهار التحكم.
    - الشكل الأصلي الأكبر محفوظ عند إخفاء التحكم.
+
+## 51) Cleanup bundle prepared (responsive gate + CI + docs)
+
+1. نطاق الدفعة:
+   - حزم التغييرات المتبقية غير المرفوعة في PR مستقل:
+     - workflow release gate
+     - responsive gate tool
+     - responsive gate test
+     - README updates
+     - ignore rules for local artifacts
+
+2. الملفات الأساسية:
+   - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/responsive_gate.py`
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_responsive_gate_logic.py`
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/README.md`
+   - `/Users/malmabar/Documents/MornningClassesCheck/.gitignore`
+
+3. سبب إضافة `.gitignore` هنا:
+   - منع إدخال screenshots وartifacts المحلية ضمن commits لاحقة عن طريق الخطأ.
+
+4. التحقق المنفذ:
+   - `ruff` للأداة والاختبار.
+   - `pytest` لملف `test_responsive_gate_logic.py` (3 اختبارات ناجحة).
+
+5. الحالة:
+   - جاهز للـcommit/push وفتح PR مستقل.

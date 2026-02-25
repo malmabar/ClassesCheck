@@ -56,6 +56,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e backend
           pip install pytest
+          pip install playwright
+
+      - name: Install Playwright Chromium
+        run: |
+          python -m playwright install chromium
 
       - name: Cleanup Cache Regression Test
         run: |
@@ -114,6 +119,13 @@ jobs:
           chmod +x scripts/release_with_gate.sh
           ./scripts/release_with_gate.sh --period all --python-exec "$(which python)"
 
+      - name: Responsive UI Gate
+        run: |
+          python -m app.tools.responsive_gate \
+            --base-url http://127.0.0.1:8000 \
+            --period صباحي \
+            --output-dir artifacts/responsive/latest
+
       - name: Upload Gate Artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -123,6 +135,7 @@ jobs:
             artifacts/acceptance/latest.json
             artifacts/acceptance/release_ready.json
             artifacts/acceptance/acceptance_*.json
+            artifacts/responsive/latest
             /tmp/uvicorn.log
           if-no-files-found: warn
 

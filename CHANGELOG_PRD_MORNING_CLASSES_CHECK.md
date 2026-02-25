@@ -1,5 +1,40 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.68 - 25 فبراير 2026
+
+### الملخص
+ترتيب الدفعة المتبقية بعد دمج إصلاحات الواجهة: إدخال `Responsive UI Gate` كجزء إلزامي في CI، مع توثيق التشغيل وإضافة قواعد ignore لمنع إدخال artifacts المحلية بالخطأ.
+
+### أهم التغييرات
+1. CI:
+   - `/Users/malmabar/Documents/MornningClassesCheck/.github/workflows/release-gate.yml`
+   - إضافة:
+     - `pip install playwright`
+     - `python -m playwright install chromium`
+     - خطوة `Responsive UI Gate`
+     - رفع artifacts من `artifacts/responsive/latest`
+2. الأداة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/responsive_gate.py`
+3. الاختبار:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_responsive_gate_logic.py`
+4. دليل التشغيل:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/README.md`
+5. تنظيم workspace:
+   - `/Users/malmabar/Documents/MornningClassesCheck/.gitignore`
+   - إضافة تجاهل:
+     - `artifacts/responsive/`
+     - `artifacts/*.png`
+     - `artifacts/tmp_*.png`
+
+### التحقق
+1. `.venv/bin/python -m ruff check backend/app/tools/responsive_gate.py backend/tests/test_responsive_gate_logic.py`
+2. `.venv/bin/python -m pytest -q backend/tests/test_responsive_gate_logic.py`
+3. النتيجة: `3 passed`.
+
+### الأثر على التنفيذ
+1. فحص responsive أصبح جزءًا واضحًا ومنفصلًا من خط الدمج.
+2. تقليل أخطاء الالتقاط غير المقصود لملفات artifacts في commits مستقبلية.
+
 ## v1.67 - 25 فبراير 2026
 
 ### الملخص

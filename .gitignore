@@ -7,4 +7,7 @@ artifacts/screenshots/
 artifacts/exports/
 artifacts/parity/
 artifacts/acceptance/
+artifacts/responsive/
+artifacts/*.png
+artifacts/tmp_*.png
 backend/artifacts/parity/
