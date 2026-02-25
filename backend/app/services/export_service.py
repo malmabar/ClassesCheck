@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import html
 import io
+import json
 import re
 import zipfile
 from datetime import datetime, timezone
@@ -26,6 +27,13 @@ from app.services.schema_guard import ensure_publish_schema
 
 
 EXPORTS_ROOT = PROJECT_ROOT / "artifacts" / "exports"
+PDF_PREVIEW_LIMIT = 40
+
+RULE_LABELS_AR = {
+    "TRAINER_TIME_CONFLICT": "تعارض وقت المدرب",
+    "ROOM_TIME_CONFLICT": "تعارض وقت القاعة",
+    "ROOM_CAPACITY_EXCEEDED": "تجاوز سعة القاعة",
+}
 
 
 def _sanitize_file_token(value: str, fallback: str = "na") -> str:
@@ -259,6 +267,248 @@ def _build_simple_pdf(lines: Iterable[str]) -> bytes:
     return pdf.getvalue()
 
 
+def _format_value(value: object) -> str:
+    if value is None:
+        return "-"
+    if isinstance(value, float):
+        return f"{value:.2f}"
+    return str(value)
+
+
+def _rule_label(rule_code: str) -> str:
+    code = str(rule_code or "").strip()
+    return RULE_LABELS_AR.get(code, code or "-")
+
+
+def _table_html(title: str, headers: Sequence[str], rows: Sequence[Sequence[object]]) -> str:
+    table_rows = []
+    for row in rows:
+        cells = "".join(f"<td>{html.escape(_format_value(cell))}</td>" for cell in row)
+        table_rows.append(f"<tr>{cells}</tr>")
+    if not table_rows:
+        table_rows.append(f'<tr><td colspan="{len(headers)}">لا توجد بيانات</td></tr>')
+
+    head_html = "".join(f"<th>{html.escape(header)}</th>" for header in headers)
+    body_html = "".join(table_rows)
+    return (
+        f'<section class="table-card">'
+        f"<h3>{html.escape(title)}</h3>"
+        f"<table><thead><tr>{head_html}</tr></thead><tbody>{body_html}</tbody></table>"
+        f"</section>"
+    )
+
+
+def _build_operational_pdf_html(report: dict) -> str:
+    run = report["run"]
+    totals = report["totals"]
+    issues_by_rule = report["issues_by_rule"]
+    day_distribution = report["day_distribution"]
+    halls_preview = report["halls_preview"]
+    crns_preview = report["crns_preview"]
+    trainers_preview = report["trainers_preview"]
+    issues_preview = report["issues_preview"]
+
+    issue_rows = [[_rule_label(rule_code), total] for rule_code, total in issues_by_rule]
+    day_rows = [
+        [day_name, day_order, occupied_total, total_cells, f"{avg_ratio:.2f}%"]
+        for day_name, day_order, occupied_total, total_cells, avg_ratio in day_distribution
+    ]
+    halls_rows = [
+        [row.room_code, row.building_code, row.day_name, row.slot_index, row.occupancy_count, row.crn_count]
+        for row in halls_preview
+    ]
+    crns_rows = [
+        [row.crn, row.course_code, row.room_code, row.trainer_name, row.day_name, row.slot_index]
+        for row in crns_preview
+    ]
+    trainers_rows = [
+        [row.trainer_name, row.trainer_job_id, row.day_name, row.slot_index, row.load_count, row.crn_count]
+        for row in trainers_preview
+    ]
+    issue_preview_rows = [
+        [row.rule_code, row.severity, row.message]
+        for row in issues_preview
+    ]
+
+    cards = [
+        ("رقم التشغيل", run.id),
+        ("الفصل", run.semester),
+        ("الفترة", run.period),
+        ("الحالة", run.status),
+        ("إجمالي الملاحظات", totals["issues_total"]),
+        ("صفوف القاعات", totals["halls_rows"]),
+        ("صفوف الشعب", totals["crns_rows"]),
+        ("صفوف المدربين", totals["trainers_rows"]),
+        ("صفوف التوزيع", totals["distribution_rows"]),
+        ("وقت التقرير (UTC)", report["generated_at_utc"]),
+    ]
+    cards_html = "".join(
+        (
+            '<article class="stat">'
+            f"<span>{html.escape(label)}</span>"
+            f"<strong>{html.escape(_format_value(value))}</strong>"
+            "</article>"
+        )
+        for label, value in cards
+    )
+
+    sections = [
+        _table_html("تفصيل الملاحظات حسب القاعدة", ["القاعدة", "العدد"], issue_rows),
+        _table_html(
+            "ملخص التوزيع اليومي",
+            ["اليوم", "ترتيب اليوم", "إجمالي الخلايا المشغولة", "إجمالي الخلايا", "متوسط الإشغال"],
+            day_rows,
+        ),
+        _table_html(
+            f"القاعات (أول {PDF_PREVIEW_LIMIT} صف)",
+            ["القاعة", "المبنى", "اليوم", "الفترة", "عدد الإشغال", "عدد الشعب"],
+            halls_rows,
+        ),
+        _table_html(
+            f"الشعب (أول {PDF_PREVIEW_LIMIT} صف)",
+            ["CRN", "المقرر", "القاعة", "المدرب", "اليوم", "الفترة"],
+            crns_rows,
+        ),
+        _table_html(
+            f"المدربين (أول {PDF_PREVIEW_LIMIT} صف)",
+            ["اسم المدرب", "رقم المدرب", "اليوم", "الفترة", "الحمل", "عدد الشعب"],
+            trainers_rows,
+        ),
+        _table_html(
+            f"أمثلة الملاحظات (أول {PDF_PREVIEW_LIMIT} صف)",
+            ["القاعدة", "الشدة", "الرسالة"],
+            issue_preview_rows,
+        ),
+    ]
+
+    sections_html = "".join(sections)
+    return f"""<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <title>تقرير تشغيل Morning Classes Check</title>
+  <style>
+    @page {{
+      size: A4;
+      margin: 14mm 10mm;
+    }}
+    body {{
+      font-family: "IBM Plex Sans Arabic", "Noto Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+      color: #1f2937;
+      margin: 0;
+      background: #f8fafc;
+      font-size: 11px;
+      line-height: 1.45;
+    }}
+    .header {{
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }}
+    .header h1 {{
+      margin: 0 0 4px;
+      font-size: 20px;
+      color: #065f46;
+    }}
+    .header p {{
+      margin: 0;
+      color: #4b5563;
+    }}
+    .stats {{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }}
+    .stat {{
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #fff;
+      padding: 6px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }}
+    .stat span {{
+      color: #475569;
+      font-size: 10px;
+    }}
+    .stat strong {{
+      color: #0f172a;
+      font-size: 12px;
+      word-break: break-all;
+    }}
+    .table-card {{
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #fff;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }}
+    .table-card h3 {{
+      margin: 0;
+      padding: 8px 10px;
+      background: #ecfeff;
+      color: #0f172a;
+      border-bottom: 1px solid #d1d5db;
+      font-size: 12px;
+    }}
+    table {{
+      width: 100%;
+      border-collapse: collapse;
+    }}
+    th, td {{
+      border: 1px solid #e5e7eb;
+      padding: 4px 6px;
+      text-align: right;
+      vertical-align: top;
+    }}
+    th {{
+      background: #f1f5f9;
+      color: #111827;
+      font-weight: 700;
+    }}
+    td {{
+      color: #1f2937;
+      word-break: break-word;
+    }}
+  </style>
+</head>
+<body>
+  <section class="header">
+    <h1>تقرير التشغيل التشغيلي</h1>
+    <p>Morning Classes Check - تقرير عربي تفصيلي للمخرجات المنشورة</p>
+  </section>
+  <section class="stats">{cards_html}</section>
+  {sections_html}
+</body>
+</html>
+"""
+
+
+def _build_pdf_with_playwright(html_document: str) -> bytes:
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(
+            headless=True,
+            args=["--no-sandbox", "--disable-dev-shm-usage"],
+        )
+        page = browser.new_page()
+        page.set_content(html_document, wait_until="load")
+        payload = page.pdf(
+            format="A4",
+            print_background=True,
+            margin={"top": "12mm", "right": "8mm", "bottom": "12mm", "left": "8mm"},
+            prefer_css_page_size=True,
+        )
+        browser.close()
+        return payload
+
+
 def _build_sheet_rows(db: Session, run_id: str) -> list[tuple[str, list[list[object]]]]:
     halls_rows = db.execute(
         select(MCPublishHallsCopy)
@@ -426,6 +676,98 @@ def _build_sheet_rows(db: Session, run_id: str) -> list[tuple[str, list[list[obj
     ]
 
 
+def _collect_pdf_report_data(db: Session, run: MCRun) -> dict:
+    run_id = run.id
+    halls_rows = db.scalar(
+        select(func.count()).select_from(MCPublishHallsCopy).where(MCPublishHallsCopy.run_id == run_id)
+    ) or 0
+    crns_rows = db.scalar(
+        select(func.count()).select_from(MCPublishCRNsCopy).where(MCPublishCRNsCopy.run_id == run_id)
+    ) or 0
+    trainers_rows = db.scalar(
+        select(func.count()).select_from(MCPublishTrainersSC).where(MCPublishTrainersSC.run_id == run_id)
+    ) or 0
+    distribution_rows = db.scalar(
+        select(func.count()).select_from(MCPublishDistribution).where(MCPublishDistribution.run_id == run_id)
+    ) or 0
+    issues_total = db.scalar(select(func.count()).select_from(MCIssue).where(MCIssue.run_id == run_id)) or 0
+
+    issues_by_rule = db.execute(
+        select(MCIssue.rule_code, func.count())
+        .where(MCIssue.run_id == run_id)
+        .group_by(MCIssue.rule_code)
+        .order_by(func.count().desc(), MCIssue.rule_code.asc())
+    ).all()
+
+    day_distribution = db.execute(
+        select(
+            MCPublishDistribution.day_name,
+            MCPublishDistribution.day_order,
+            func.sum(MCPublishDistribution.occupied_cells),
+            func.max(MCPublishDistribution.total_cells),
+            func.avg(MCPublishDistribution.occupancy_ratio),
+        )
+        .where(MCPublishDistribution.run_id == run_id)
+        .group_by(MCPublishDistribution.day_name, MCPublishDistribution.day_order)
+        .order_by(MCPublishDistribution.day_order.asc())
+    ).all()
+
+    halls_preview = db.execute(
+        select(MCPublishHallsCopy)
+        .where(MCPublishHallsCopy.run_id == run_id)
+        .order_by(
+            MCPublishHallsCopy.occupancy_count.desc(),
+            MCPublishHallsCopy.crn_count.desc(),
+            MCPublishHallsCopy.room_code.asc(),
+        )
+        .limit(PDF_PREVIEW_LIMIT)
+    ).scalars().all()
+    crns_preview = db.execute(
+        select(MCPublishCRNsCopy)
+        .where(MCPublishCRNsCopy.run_id == run_id)
+        .order_by(
+            MCPublishCRNsCopy.day_order.asc(),
+            MCPublishCRNsCopy.slot_index.asc(),
+            MCPublishCRNsCopy.crn.asc(),
+        )
+        .limit(PDF_PREVIEW_LIMIT)
+    ).scalars().all()
+    trainers_preview = db.execute(
+        select(MCPublishTrainersSC)
+        .where(MCPublishTrainersSC.run_id == run_id)
+        .order_by(
+            MCPublishTrainersSC.load_count.desc(),
+            MCPublishTrainersSC.crn_count.desc(),
+            MCPublishTrainersSC.trainer_job_id.asc(),
+        )
+        .limit(PDF_PREVIEW_LIMIT)
+    ).scalars().all()
+    issues_preview = db.execute(
+        select(MCIssue)
+        .where(MCIssue.run_id == run_id)
+        .order_by(MCIssue.id.asc())
+        .limit(PDF_PREVIEW_LIMIT)
+    ).scalars().all()
+
+    return {
+        "run": run,
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "totals": {
+            "issues_total": int(issues_total),
+            "halls_rows": int(halls_rows),
+            "crns_rows": int(crns_rows),
+            "trainers_rows": int(trainers_rows),
+            "distribution_rows": int(distribution_rows),
+        },
+        "issues_by_rule": issues_by_rule,
+        "day_distribution": day_distribution,
+        "halls_preview": halls_preview,
+        "crns_preview": crns_preview,
+        "trainers_preview": trainers_preview,
+        "issues_preview": issues_preview,
+    }
+
+
 def export_run_xlsx(db: Session, run_id: str, triggered_by: str = "api-user") -> dict:
     ensure_publish_schema(db)
 
@@ -485,39 +827,32 @@ def export_run_pdf(db: Session, run_id: str, triggered_by: str = "api-user") -> 
         raise ValueError("Run not found.")
 
     _ensure_published(db, run, triggered_by=triggered_by)
+    report_data = _collect_pdf_report_data(db=db, run=run)
+    html_document = _build_operational_pdf_html(report_data)
 
-    halls_rows = db.scalar(
-        select(func.count()).select_from(MCPublishHallsCopy).where(MCPublishHallsCopy.run_id == run_id)
-    ) or 0
-    crns_rows = db.scalar(
-        select(func.count()).select_from(MCPublishCRNsCopy).where(MCPublishCRNsCopy.run_id == run_id)
-    ) or 0
-    trainers_rows = db.scalar(
-        select(func.count()).select_from(MCPublishTrainersSC).where(MCPublishTrainersSC.run_id == run_id)
-    ) or 0
-    distribution_rows = db.scalar(
-        select(func.count())
-        .select_from(MCPublishDistribution)
-        .where(MCPublishDistribution.run_id == run_id)
-    ) or 0
-    issues_total = db.scalar(
-        select(func.count()).select_from(MCIssue).where(MCIssue.run_id == run_id)
-    ) or 0
-
-    lines = [
-        "Morning Classes Check - Run Summary",
-        f"Run ID: {run.id}",
-        f"Semester: {run.semester}",
-        f"Period: {_period_token(run.period)}",
-        f"Status: {run.status}",
-        f"Issues Total: {issues_total}",
-        f"Halls Rows: {halls_rows}",
-        f"CRNs Rows: {crns_rows}",
-        f"Trainers Rows: {trainers_rows}",
-        f"Distribution Rows: {distribution_rows}",
-        f"Generated UTC: {datetime.now(timezone.utc).isoformat()}",
-    ]
-    payload = _build_simple_pdf(lines)
+    build_mode = "playwright"
+    fallback_error = None
+    try:
+        payload = _build_pdf_with_playwright(html_document)
+    except Exception as exc:  # noqa: BLE001
+        build_mode = "fallback_simple_pdf"
+        fallback_error = f"{exc.__class__.__name__}: {exc}"
+        totals = report_data["totals"]
+        fallback_lines = [
+            "Morning Classes Check - Operational Run Report",
+            f"Run ID: {run.id}",
+            f"Semester: {run.semester}",
+            f"Period: {run.period}",
+            f"Status: {run.status}",
+            f"Issues Total: {totals['issues_total']}",
+            f"Halls Rows: {totals['halls_rows']}",
+            f"CRNs Rows: {totals['crns_rows']}",
+            f"Trainers Rows: {totals['trainers_rows']}",
+            f"Distribution Rows: {totals['distribution_rows']}",
+            f"Generated UTC: {report_data['generated_at_utc']}",
+            "Render Mode: fallback_simple_pdf",
+        ]
+        payload = _build_simple_pdf(fallback_lines)
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     semester_token = _sanitize_file_token(run.semester, fallback="semester")
@@ -542,7 +877,14 @@ def export_run_pdf(db: Session, run_id: str, triggered_by: str = "api-user") -> 
             level="INFO",
             code="EXPORT_PDF",
             message="PDF export generated successfully.",
-            details_json='{"artifact_type":"EXPORT_PDF"}',
+            details_json=json.dumps(
+                {
+                    "artifact_type": "EXPORT_PDF",
+                    "mode": build_mode,
+                    "fallback_error": fallback_error,
+                },
+                ensure_ascii=False,
+            ),
         )
     )
     db.commit()

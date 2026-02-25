@@ -1,5 +1,278 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.62 - 25 فبراير 2026
+
+### الملخص
+إغلاق بند `API governance` بالكامل عبر اعتماد صيغة أخطاء موحدة مع `trace_id` واستكمال endpoints `warnings/errors/compare`.
+
+### أهم التغييرات
+1. توحيد أخطاء الـAPI:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/main.py`
+   - إضافة:
+     - middleware لإدارة `trace_id` وإرجاع `X-Trace-Id`.
+     - handlers موحّدة لأخطاء `HTTP/Validation/Unhandled`.
+   - صيغة error payload:
+     - `code`
+     - `message`
+     - `details`
+     - `trace_id`
+   - مع إبقاء `detail` للتوافق الخلفي.
+2. استكمال endpoints في runs:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/api/routes/runs.py`
+   - إضافة:
+     - `GET /api/v1/mc/runs/{run_id}/warnings`
+     - `GET /api/v1/mc/runs/{run_id}/errors`
+     - `GET /api/v1/mc/runs/compare`
+   - دعم sort في warnings/errors (`id/created_at/severity/rule_code`).
+3. تحسين استهلاك رسائل الخطأ في الواجهة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+   - `fetchJson` يقرأ `detail/message/code` كـfallback.
+4. تحديثات الاختبارات:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_runs_advanced_filters_api.py`
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_rbac_api.py`
+
+### التحقق
+1. `node --check backend/app/ui/scripts/dashboard.js`
+2. `.venv/bin/python -m ruff check backend/app/main.py backend/app/api/routes/runs.py backend/tests/test_runs_advanced_filters_api.py backend/tests/test_rbac_api.py`
+3. `.venv/bin/python -m pytest -q backend/tests/test_runs_advanced_filters_api.py backend/tests/test_rbac_api.py backend/tests/test_run_lifecycle.py backend/tests/test_export_pdf_report.py backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py backend/tests/test_ui_offline_assets.py`
+4. النتيجة: `39 passed, 1 skipped`.
+
+### الأثر على التنفيذ
+1. إغلاق `API governance` من متبقي PRD.
+2. مسار PRD التنفيذي الأساسي أصبح مغلقًا بالكامل.
+
+## v1.61 - 25 فبراير 2026
+
+### الملخص
+إغلاق بند `offline assets` عبر تحويل الخط والأيقونات إلى أصول محلية وإزالة أي مرجع CDN من الواجهة.
+
+### أهم التغييرات
+1. إضافة خط عربي محلي:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/assets/fonts/SFArabic.ttf`
+2. تحديث خط الواجهة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/tokens.css`
+   - إضافة `@font-face` واستخدام `MC Arabic Local`.
+3. إضافة محرك أيقونات محلي:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/lucide.local.js`
+   - يدعم `window.lucide.createIcons()` بدون CDN.
+4. تحديث HTML:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/index.html`
+   - إزالة روابط:
+     - `fonts.googleapis.com`
+     - `fonts.gstatic.com`
+     - `unpkg.com/lucide`
+   - إضافة:
+     - `/ui/scripts/lucide.local.js`
+5. تحديث CSS للأيقونات:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+6. إضافة اختبار حماية:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_ui_offline_assets.py`
+
+### التحقق
+1. `node --check backend/app/ui/scripts/lucide.local.js`
+2. `node --check backend/app/ui/scripts/dashboard.js`
+3. `.venv/bin/python -m ruff check backend/tests/test_ui_offline_assets.py`
+4. `.venv/bin/python -m pytest -q backend/tests/test_ui_offline_assets.py backend/tests/test_runs_advanced_filters_api.py backend/tests/test_rbac_api.py backend/tests/test_run_lifecycle.py backend/tests/test_export_pdf_report.py backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py`
+5. النتيجة: `34 passed, 1 skipped`.
+
+### الأثر على التنفيذ
+1. الواجهة أصبحت مستقلة عن CDN للخط والأيقونات.
+2. المتبقي في PRD:
+   - API governance المتقدم.
+
+## v1.60 - 25 فبراير 2026
+
+### الملخص
+تحسين UX لتوجيه المستخدم إلى التسلسل الصحيح قبل النشر/التصدير، عبر تعطيل الأزرار حتى اكتمال الفحوصات وإظهار رسالة عربية واضحة بدل خطأ backend.
+
+### أهم التغييرات
+1. تحديث API عقدة التشغيل المفرد:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/api/routes/runs.py`
+   - إضافة:
+     - `metrics.checks_finished_count`
+     - `metrics.checks_ready`
+2. تحديث واجهة التحكم:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+   - تعطيل:
+     - `نشر النتائج`
+     - `تصدير Excel`
+     - `تصدير PDF`
+     عند عدم جاهزية الفحوصات.
+   - إضافة رسائل إرشادية عربية:
+     - `يلزم تشغيل الفحوصات أولًا قبل ...`.
+   - fallback دفاعي في `catch` لنفس رسالة backend.
+3. تحديث النمط البصري للأزرار المعطلة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+4. تحديث اختبار API:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_runs_advanced_filters_api.py`
+   - تغطية وجود `checks_ready` في payload.
+
+### التحقق
+1. `node --check backend/app/ui/scripts/dashboard.js`
+2. `.venv/bin/python -m ruff check backend/app/api/routes/runs.py backend/tests/test_runs_advanced_filters_api.py`
+3. `.venv/bin/python -m pytest -q backend/tests/test_runs_advanced_filters_api.py backend/tests/test_rbac_api.py backend/tests/test_run_lifecycle.py backend/tests/test_export_pdf_report.py backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py`
+4. النتيجة: `32 passed, 1 skipped`.
+
+### الأثر على التنفيذ
+1. منع خطأ الاستخدام المتكرر قبل النشر/التصدير.
+2. إبقاء المتبقي في PRD على:
+   - offline assets
+   - API governance المتقدم.
+
+## v1.59 - 24 فبراير 2026
+
+### الملخص
+إغلاق بند `advanced filters` في PRD عبر توسيع فلاتر Heatmap في الواجهة، وتفعيل filtering متقدم على endpoints القراءة تحت `/runs/*`.
+
+### أهم التغييرات
+1. تحديث واجهة Heatmap:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/index.html`
+   - إضافة فلاتر:
+     - `القسم`
+     - `المبنى`
+     - `CRN`
+     - `المدرب`
+2. تحديث CSS للفلاتر:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+   - شبكة الفلاتر أصبحت 4 أعمدة مع الحفاظ على responsive.
+3. تحديث منطق التصفية في:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+   - ربط الفلاتر الجديدة بالأحداث وتطبيقها على الشاشات الأربع معًا.
+4. توسيع API filtering في:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/api/routes/runs.py`
+   - إضافة `_normalized_query` وتفعيل فلاتر متقدمة على:
+     - `source-ss01`
+     - `codes`
+     - `halls`
+     - `crns`
+     - `trainers`
+     - `distribution`
+   - إرجاع كائن `filters` في الاستجابة.
+5. إضافة اختبار جديد:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_runs_advanced_filters_api.py`
+   - يغطي ILIKE/OR/day-slot وتطبيع القيم.
+
+### التحقق
+1. `node --check backend/app/ui/scripts/dashboard.js`
+2. `.venv/bin/python -m ruff check backend/app/api/routes/runs.py backend/tests/test_runs_advanced_filters_api.py`
+3. `.venv/bin/python -m pytest -q backend/tests/test_runs_advanced_filters_api.py backend/tests/test_rbac_api.py backend/tests/test_run_lifecycle.py backend/tests/test_export_pdf_report.py backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py`
+4. النتيجة: `31 passed, 1 skipped`.
+
+### الأثر على التنفيذ
+1. إغلاق `advanced filters` من المتبقي التنفيذي.
+2. المتبقي:
+   - offline assets
+   - API governance المتقدم.
+
+## v1.58 - 24 فبراير 2026
+
+### الملخص
+ترقية `export.pdf` من ملخص نصي إلى تقرير عربي تشغيلي مفصل (RTL) مع fallback آمن عند تعذر محرك المتصفح.
+
+### أهم التغييرات
+1. تحديث:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/services/export_service.py`
+2. اعتماد مسار توليد PDF جديد:
+   - تجميع بيانات تشغيل مفصلة (counts + issues by rule + day distribution + previews).
+   - بناء HTML عربي RTL.
+   - تحويل HTML إلى PDF عبر Playwright/Chromium.
+3. إضافة fallback تشغيلي:
+   - عند فشل Playwright يتم الرجوع تلقائيًا إلى `simple PDF`.
+   - تسجيل `mode` وسبب fallback في `MCRunLog(EXPORT_PDF)`.
+4. إضافة اختبارات:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_export_pdf_report.py`
+   - تغطية وجود الأقسام العربية + توقيع PDF + مسار Playwright (مع skip إذا البيئة لا تدعم المتصفح).
+
+### التحقق
+1. `.venv/bin/python -m ruff check backend/app/services/export_service.py backend/tests/test_export_pdf_report.py`
+2. `.venv/bin/python -m pytest -q backend/tests/test_export_pdf_report.py backend/tests/test_run_lifecycle.py backend/tests/test_rbac_api.py backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py`
+3. النتيجة: `24 passed, 1 skipped`.
+
+### الأثر على التنفيذ
+1. إغلاق بند `PDF Arabic parity` من المتبقي في PRD.
+2. المتبقي:
+   - advanced filters
+   - offline assets
+   - API governance المتقدم.
+
+## v1.57 - 24 فبراير 2026
+
+### الملخص
+إغلاق بند `FR-013` عبر تنفيذ Run Lifecycle فعلي يشمل: lock سياقي، idempotency key، وإعادة محاولة تلقائية واحدة للأخطاء العابرة.
+
+### أهم التغييرات
+1. إضافة lifecycle service:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/services/run_lifecycle.py`
+2. إضافة `idempotency_key` إلى `mc_run`:
+   - model:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/models/run.py`
+   - migration:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/alembic/versions/20260224_0005_add_idempotency_key_to_run.py`
+3. تطبيق idempotency على الاستيراد:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/services/import_service.py`
+   - منع duplicate import وإرجاع run السابق عند تطابق key.
+4. تطبيق lifecycle على pipeline:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/services/run_service.py`
+   - lock (`semester+period`) قبل الاشتقاق.
+   - retry مرة واحدة عند transient error.
+   - تحويل الحالة إلى `FAILED` عند استنفاد retry.
+5. تحديث API:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/api/routes/pipeline.py`
+     - إرجاع `409` عند lock conflict.
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/api/routes/runs.py`
+     - عرض `idempotency_key` في تفاصيل وقائمة التشغيلات.
+6. إعدادات جديدة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/core/config.py`
+   - `MC_RUN_LOCK_TTL_SECONDS`
+   - `MC_TRANSIENT_RETRY_COUNT`
+7. اختبارات جديدة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_run_lifecycle.py`
+
+### التحقق
+1. `.venv/bin/python -m pytest -q backend/tests` -> `22 passed`
+2. `.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` -> نجاح ترقية `0005`
+3. `.venv/bin/python -m ruff check ...` -> `All checks passed`
+
+### الأثر على التنفيذ
+1. إغلاق Run Lifecycle من المتبقي في PRD.
+2. المتبقي:
+   - PDF Arabic parity
+   - advanced filters
+   - offline assets
+   - API governance المتقدم.
+
+## v1.56 - 24 فبراير 2026
+
+### الملخص
+تنفيذ RBAC فعلي على مسارات الـAPI الحساسة وفق أدوار التشغيل المعتمدة في PRD (`Admin/Operator/Viewer`).
+
+### أهم التغييرات
+1. إضافة طبقة صلاحيات مركزية:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/api/deps/rbac.py`
+2. إضافة إعداد دور افتراضي:
+   - `MC_DEFAULT_ROLE` (default=`operator`) في:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/core/config.py`
+3. ربط صلاحيات القراءة/التشغيل بالـroutes:
+   - mutation (`import/run/checks/publish/export`) => `Admin|Operator`.
+   - read تحت `/api/v1/mc/runs` => `Admin|Operator|Viewer`.
+4. إضافة تغطية اختبار API للصلاحيات:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_rbac_api.py`
+
+### التحقق
+1. تشغيل:
+   - `.venv/bin/python -m pytest -q backend/tests/test_rbac_api.py backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py`
+2. النتيجة:
+   - `17 passed`.
+
+### الأثر على التنفيذ
+1. إغلاق بند RBAC من متبقي PRD.
+2. المتبقي التنفيذي أصبح:
+   - Run Lifecycle (`lock/idempotency/retry`)
+   - PDF Arabic parity
+   - advanced filters
+   - offline assets
+   - API governance المتقدم.
+
 ## v1.55 - 24 فبراير 2026
 
 ### الملخص

@@ -65,7 +65,7 @@
 38. تم تنفيذ FR-009 (النشر) عبر جداول `publish_*` مع ربطها بـ`run_id` وتحديث الحالة إلى `PUBLISHED` بعد نجاح الفحوصات.
 39. تم تنفيذ FR-010 (التصدير) عبر:
    - `export.xlsx` (Excel فعلي)
-   - `export.pdf` (تقرير PDF ملخص)
+   - `export.pdf` (تقرير PDF عربي تشغيلي مفصل مع RTL)
    مع حفظ artifacts داخل قاعدة البيانات.
 40. تمت إضافة أزرار الواجهة الخاصة بالنشر والتصدير، وتنزيل الملفات مباشرة من نفس لوحة التحكم.
 41. تمت إضافة أداة مطابقة نشر تلقائية:
@@ -75,6 +75,24 @@
 43. تم تحسين رسائل أخطاء API الخاصة بـ publish/export لتوضيح نوع المشكلة (قاعدة بيانات/كتابة ملف) بدل رسالة `Internal Server Error` العامة.
 44. عند فشل DB في publish/export تظهر الآن رسالة إرشادية مباشرة لتشغيل:
    - `alembic -c backend/alembic.ini upgrade head`
+45. تم تنفيذ RBAC فعلي على الـAPI:
+   - `Admin`: كامل.
+   - `Operator`: استيراد/تشغيل/فحوصات/نشر/تصدير + قراءة.
+   - `Viewer`: قراءة فقط.
+46. تم إضافة دعم هيدر الدور:
+   - `X-MC-Role` (اختياري)، مع fallback إلى `MC_DEFAULT_ROLE=operator`.
+47. تم تنفيذ Run Lifecycle فعلي:
+   - قفل سياقي (`semester + period`) عبر `mc_run_lock` قبل تشغيل pipeline.
+   - retry تلقائي مرة واحدة للأخطاء العابرة.
+   - تحويل run إلى `FAILED` بعد استنفاد retry.
+48. تم تفعيل idempotency key على مستوى التشغيل:
+   - حقل `idempotency_key` داخل `mc_run`.
+   - منع استيراد SS01 المكرر لنفس البصمة.
+   - منع إعادة اشتقاق `mc_codes` عندما تكون المخرجات موجودة بالفعل لنفس run.
+49. تم ترقية مسار PDF:
+   - بناء تقرير HTML عربي تفصيلي (ملخص + جداول تشغيلية) وتحويله إلى PDF عبر Playwright.
+   - fallback تلقائي إلى مولد PDF البسيط عند تعذر المتصفح.
+   - تسجيل `mode` وسبب fallback في `mc_run_log`.
 
 ## 2) أهم الـEndpoints المتاحة
 
@@ -118,6 +136,7 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
 2. `20260222_0002_create_mc_codes`
 3. `20260222_0003_create_mc_issues`
 4. `20260224_0004_create_mc_publish_and_output_artifacts`
+5. `20260224_0005_add_idempotency_key_to_run`
 
 ## 5) ما تم التحقق منه
 
@@ -157,6 +176,15 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
 19. تم التحقق من سلامة كود إصلاح 500:
    - `ast.parse` لملفات `schema_guard/publish_service/export_service/runs`.
    - اختبار استيراد التطبيق والـroutes بنجاح.
+20. تم التحقق من RBAC عبر اختبارات API:
+   - `.venv/bin/python -m pytest -q backend/tests/test_rbac_api.py backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py`
+   - النتيجة: `17 passed`.
+21. تم التحقق من Run Lifecycle:
+   - `.venv/bin/python -m pytest -q backend/tests` -> `22 passed`.
+   - `.venv/bin/python -m alembic -c backend/alembic.ini upgrade head` -> migration `0005` مطبق بنجاح.
+22. تم التحقق من ترقية PDF العربي:
+   - `.venv/bin/python -m pytest -q backend/tests/test_export_pdf_report.py backend/tests/test_run_lifecycle.py backend/tests/test_rbac_api.py backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py`
+   - النتيجة: `24 passed, 1 skipped`.
 
 ## 6) قيود وملاحظات معروفة
 
@@ -168,19 +196,15 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
 
 ## 7) الأولويات التالية (Next)
 
-1. تنفيذ RBAC فعلي حسب PRD:
-   - `Admin` (كامل)، `Operator` (استيراد/تشغيل/نشر/تصدير)، `Viewer` (قراءة فقط).
-   - تقييد تنزيل المخرجات المنشورة للأدوار المخولة.
-2. استكمال Run Lifecycle على مستوى البنية:
-   - lock تشغيلي للسياق (`semester + period`) لمنع التشغيل المتوازي.
-   - `idempotency_key` فعلي للتشغيلات المكررة.
-   - retry تلقائي للأخطاء العابرة ضمن سياسة FR-013.
-3. تحسين `export.pdf` لعرض عربي تشغيلي كامل (وليس ملخصًا نصيًا فقط).
-4. توسيع الفلاتر المتقدمة في الشاشات:
+1. استكمال Run Lifecycle على مستوى البنية:
+   - مكتمل.
+2. تحسين `export.pdf` لعرض عربي تشغيلي كامل (وليس ملخصًا نصيًا فقط):
+   - مكتمل.
+3. توسيع الفلاتر المتقدمة في الشاشات:
    - قسم/مبنى/CRN/مدرب.
-5. تحويل الأصول إلى local assets:
+4. تحويل الأصول إلى local assets:
    - خط عربي + أيقونات بدل الاعتماد على CDN (Offline readiness).
-6. استكمال حوكمة API:
+5. استكمال حوكمة API:
    - توحيد صيغة الأخطاء (`code/message/details/trace_id`).
    - استكمال endpoints غير المنفذة في PRD (`warnings/errors` + مقارنة Runين).
 
@@ -863,3 +887,170 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
      - `distribution_rows`
 6. ملاحظة:
    - لم يلزم أي تعديل كود في هذه الخطوة؛ كانت خطوة تحقق وإغلاق parity تشغيلي.
+
+## 38) تنفيذ Advanced Filters على الواجهة والـAPI (تم)
+
+1. الهدف:
+   - إغلاق بند الفلاتر المتقدمة (`قسم/مبنى/CRN/مدرب`) في الشاشات الحرارية مع دعم API filtering الموسع.
+2. تعديلات الواجهة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/index.html`
+     - إضافة حقول:
+       - `القسم`
+       - `المبنى`
+       - `CRN`
+       - `المدرب`
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+     - توسيع grid فلاتر الشاشات إلى 4 أعمدة مع الحفاظ على responsive breakpoints.
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+     - ربط الفلاتر الجديدة بالأحداث (`input`).
+     - تطبيق الفلاتر المتقدمة داخل `activeHeatmapRows`.
+     - دعم فلترة المدرب عبر الاسم أو الرقم الوظيفي.
+     - تحسين التطبيع النصي بإدخال تحويل الأرقام العربية/الفارسية.
+3. تعديلات الـAPI:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/api/routes/runs.py`
+   - إضافة helper: `_normalized_query`.
+   - توسيع endpoint filters:
+     - `/source-ss01`: `department/building_code/crn/trainer`
+     - `/codes`: `department/building_code/room_code/crn/trainer`
+     - `/halls`: `room_code/building_code/crn/day_order/slot_index`
+     - `/crns`: `crn/course_code/room_code/trainer/day_order/slot_index`
+     - `/trainers`: `trainer_job_id/trainer_name/crn/day_order/slot_index`
+     - `/distribution`: `day_order/slot_index`
+   - إرجاع `filters` ضمن payload لهذه endpoints.
+4. الاختبارات:
+   - إضافة:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_runs_advanced_filters_api.py`
+   - تغطية:
+     - شروط `ILIKE` الجزئية.
+     - OR logic للمدرب.
+     - تطبيع القيم الفارغة.
+     - فلاتر `day_order/slot_index`.
+5. التحقق:
+   - `node --check backend/app/ui/scripts/dashboard.js`
+   - `.venv/bin/python -m ruff check backend/app/api/routes/runs.py backend/tests/test_runs_advanced_filters_api.py`
+   - `.venv/bin/python -m pytest -q backend/tests/test_runs_advanced_filters_api.py backend/tests/test_rbac_api.py backend/tests/test_run_lifecycle.py backend/tests/test_export_pdf_report.py backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py`
+   - النتيجة: `31 passed, 1 skipped`.
+
+## 39) الأولويات المتبقية بعد الإغلاق
+
+1. Offline Assets readiness:
+   - نقل الخط العربي والأيقونات من CDN إلى أصول محلية.
+2. API governance المتقدم:
+   - توحيد envelope الأخطاء (`code/message/details/trace_id`).
+   - استكمال endpoints الحوكمة غير المكتملة في PRD (warnings/errors + compare runs).
+
+## 40) منع النشر/التصدير قبل الفحوصات (تم)
+
+1. الدافع:
+   - المستخدم كان يصل لخطأ backend:
+     - `Run checks must be executed before publishing`
+   - السبب: الضغط على `نشر النتائج` قبل `تشغيل الفحوصات`.
+2. الحل المطبق:
+   - API:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/api/routes/runs.py`
+     - `GET /runs/{run_id}` يعيد الآن:
+       - `metrics.checks_finished_count`
+       - `metrics.checks_ready`
+   - UI:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+     - تعطيل أزرار:
+       - `نشر النتائج`
+       - `تصدير Excel`
+       - `تصدير PDF`
+       عند غياب `checks_ready`.
+     - رسالة عربية واضحة بدل fallback error:
+       - `يلزم تشغيل الفحوصات أولًا قبل ...`.
+   - Styling:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+     - تحسين شكل الأزرار disabled (`cursor: not-allowed`).
+3. التحقق:
+   - `node --check backend/app/ui/scripts/dashboard.js`
+   - `.venv/bin/python -m ruff check backend/app/api/routes/runs.py backend/tests/test_runs_advanced_filters_api.py`
+   - `.venv/bin/python -m pytest -q backend/tests/test_runs_advanced_filters_api.py backend/tests/test_rbac_api.py backend/tests/test_run_lifecycle.py backend/tests/test_export_pdf_report.py backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py`
+   - النتيجة: `32 passed, 1 skipped`.
+4. النتيجة التشغيلية:
+   - الـworkflow أصبح واضحًا للمستخدم داخل الواجهة:
+     - `تشغيل المعالجة` ثم `تشغيل الفحوصات` ثم `نشر/تصدير`.
+
+## 41) تنفيذ Offline Assets (تم)
+
+1. الهدف:
+   - إزالة أي اعتماد CDN من واجهة التشغيل لتعمل offline بشكل كامل للخط والأيقونات.
+2. ما تم:
+   - خط محلي:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/assets/fonts/SFArabic.ttf`
+   - تحديث خط الواجهة:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/tokens.css`
+     - إضافة `@font-face` باسم `MC Arabic Local`.
+   - أيقونات محلية:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/lucide.local.js`
+     - توفير `window.lucide.createIcons()` محليًا.
+   - تحديث الصفحة:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/index.html`
+     - إزالة `fonts.googleapis / fonts.gstatic / unpkg`.
+     - ربط `/ui/scripts/lucide.local.js`.
+   - تحديث CSS:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/styles/components.css`
+     - دعم عرض SVG داخل `.icon`.
+3. اختبار منع regression:
+   - ملف:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_ui_offline_assets.py`
+   - يتحقق من:
+     - عدم وجود أي host خارجي في `index.html`.
+     - وجود assets المحلية وربطها.
+4. التحقق:
+   - `node --check backend/app/ui/scripts/lucide.local.js`
+   - `node --check backend/app/ui/scripts/dashboard.js`
+   - `.venv/bin/python -m ruff check backend/tests/test_ui_offline_assets.py`
+   - `.venv/bin/python -m pytest -q backend/tests/test_ui_offline_assets.py backend/tests/test_runs_advanced_filters_api.py backend/tests/test_rbac_api.py backend/tests/test_run_lifecycle.py backend/tests/test_export_pdf_report.py backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py`
+   - النتيجة: `34 passed, 1 skipped`.
+
+## 42) الأولوية المتبقية (PRD)
+
+1. API governance المتقدم:
+   - توحيد envelope الأخطاء (`code/message/details/trace_id`).
+   - استكمال endpoints الحوكمة غير المكتملة (`warnings/errors` + compare runs).
+
+## 43) إغلاق API Governance (تم)
+
+1. Error Envelope موحّد:
+   - ملف:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/main.py`
+   - التنفيذ:
+     - `trace_id` لكل request + header `X-Trace-Id`.
+     - صيغة أخطاء موحدة:
+       - `code`, `message`, `details`, `trace_id`
+     - حقل `detail` محفوظ للتوافق الخلفي.
+2. استكمال endpoints الحوكمة:
+   - ملف:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/api/routes/runs.py`
+   - endpoints جديدة:
+     - `GET /api/v1/mc/runs/{run_id}/warnings`
+     - `GET /api/v1/mc/runs/{run_id}/errors`
+     - `GET /api/v1/mc/runs/compare?left_run_id=...&right_run_id=...`
+   - دعم sort في endpoints الجديدة (`id/created_at/severity/rule_code` مع `asc|desc`).
+3. تحسين واجهة المستهلك:
+   - ملف:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/ui/scripts/dashboard.js`
+   - `fetchJson` أصبح يقرأ الخطأ من:
+     - `detail` ثم `message` ثم `code`.
+4. الاختبارات:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_runs_advanced_filters_api.py`
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_rbac_api.py`
+5. التحقق:
+   - `node --check backend/app/ui/scripts/dashboard.js`
+   - `.venv/bin/python -m ruff check backend/app/main.py backend/app/api/routes/runs.py backend/tests/test_runs_advanced_filters_api.py backend/tests/test_rbac_api.py`
+   - `.venv/bin/python -m pytest -q backend/tests/test_runs_advanced_filters_api.py backend/tests/test_rbac_api.py backend/tests/test_run_lifecycle.py backend/tests/test_export_pdf_report.py backend/tests/test_check_service_dedupe.py backend/tests/test_release_with_gate_cleanup.py backend/tests/test_ui_offline_assets.py`
+   - النتيجة: `39 passed, 1 skipped`.
+
+## 44) حالة PRD بعد هذا الإغلاق
+
+1. البنود التنفيذية الأساسية أصبحت مكتملة:
+   - RBAC
+   - Run Lifecycle
+   - PDF عربي تشغيلي
+   - Advanced Filters
+   - Offline Assets
+   - API Governance
+2. الخطوة التالية التشغيلية:
+   - دورة إغلاق إصدار (Gate + Tag) إذا رغبت الآن.
