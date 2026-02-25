@@ -115,6 +115,43 @@ python -m app.tools.publish_parity_report \
 Outputs are saved under:
 - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/parity/`
 
+## Pilot / Cutover Report (PRD Phase 4)
+
+Generate a cutover-readiness report based on:
+- published runs parity against SS01 baseline
+- distinct operation days coverage per period (default: 14 days)
+
+```bash
+python -m app.tools.pilot_cutover_report \
+  --csv-file /Users/malmabar/Desktop/TraineeConflicts/SS01.csv \
+  --period all \
+  --accepted-statuses PUBLISHED \
+  --require-input-checksum-match \
+  --min-distinct-days 14 \
+  --output-file /Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/latest.json
+```
+
+Notes:
+- By default, runs are filtered to the same `input_checksum` of the provided CSV.
+- Disable this only for broad historical audits:
+  - `--no-require-input-checksum-match`
+
+Exit code policy:
+- `0` => `cutover_ready=true`
+- `1` => not ready yet (coverage short and/or parity mismatches exist)
+
+After editable install, you can run:
+
+```bash
+mc-pilot-cutover-report \
+  --csv-file /Users/malmabar/Desktop/TraineeConflicts/SS01.csv \
+  --period all
+```
+
+Artifacts:
+- latest report: `/Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/latest.json`
+- timestamped snapshots: `/Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/pilot_cutover_*.json`
+
 ## Mandatory Release Readiness Gate
 
 Before any release/tag/deployment, run the mandatory gate below.  

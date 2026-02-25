@@ -1258,3 +1258,72 @@ python -m uvicorn app.main:app --reload --app-dir /Users/malmabar/Documents/Morn
 
 5. الحالة:
    - جاهز للـcommit/push وفتح PR مستقل.
+
+## 52) Pilot/Cutover readiness report (PRD 13.5) - تم البدء
+
+1. الهدف:
+   - تحويل بند `Pilot & Cutover` من متابعة يدوية إلى تقرير آلي قابل للتدقيق.
+
+2. ما تم إضافته:
+   - أداة جديدة:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/pilot_cutover_report.py`
+   - تقيس لكل فترة (`صباحي/مسائي`):
+     - عدد التشغيلات ضمن الحالات المعتمدة (افتراضي `PUBLISHED`).
+     - عدد الأيام التشغيلية المميزة (`distinct_days_count`).
+     - عدد التشغيلات غير المتطابقة مع baseline (`parity_mismatch_runs`).
+   - مخرجات القرار:
+     - `cutover_ready` (boolean)
+     - `overall_status` (`PASSED`/`FAILED`)
+     - `failures` لشرح سبب عدم الجاهزية.
+
+3. واجهة التشغيل:
+   - python module:
+     - `python -m app.tools.pilot_cutover_report --csv-file <SS01.csv> --period all`
+   - console script:
+     - `mc-pilot-cutover-report --csv-file <SS01.csv> --period all`
+   - artifact افتراضي:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/latest.json`
+   - تم تحديث:
+     - `/Users/malmabar/Documents/MornningClassesCheck/.gitignore`
+     - لإضافة `artifacts/pilot/`.
+
+4. التحقق:
+   - `ruff` + `pytest` ناجح:
+     - `backend/tests/test_pilot_cutover_report_logic.py`
+     - `backend/tests/test_responsive_gate_logic.py`
+   - النتيجة: `9 passed`.
+
+5. الخطوة التالية المباشرة:
+   - تشغيل الأداة يوميًا/بعد كل تشغيل منشور خلال نافذة 2-4 أسابيع.
+   - عند تحقق:
+     - `cutover_ready=true`
+     - وعدم وجود mismatch
+   - يتم إصدار قرار اعتماد المسار الرسمي وإغلاق PRD Phase 4.
+
+## 53) تحسين Pilot report: checksum-scoped runs + نتيجة تشغيل فعلية
+
+1. ما الذي تغيّر:
+   - تقرير الـPilot أصبح يفلتر التشغيلات تلقائيًا إلى نفس `input_checksum` الخاص بملف `SS01.csv` الممرر.
+   - هذا التعديل يقلل mismatch غير العادل القادم من تشغيلات قديمة بمدخلات مختلفة.
+
+2. التعديل الفني:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/pilot_cutover_report.py`
+   - إضافة:
+     - `--require-input-checksum-match` (افتراضي true)
+     - `--no-require-input-checksum-match` للحالات التحليلية فقط.
+
+3. نتيجة التشغيل الفعلي بعد التعديل:
+   - ملف التقرير:
+     - `/Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/latest.json`
+   - الحالة:
+     - `cutover_ready=false`
+   - الفروقات:
+     - صباحي: `runs=14`, `days=2/14`, `mismatches=1`
+     - مسائي: `runs=9`, `days=2/14`, `mismatches=0`
+   - run mismatch المتبقي:
+     - `7a722ec5-09f9-4f47-a3ee-e1c8e110a970`
+
+4. القراءة الصحيحة للحالة:
+   - سبب عدم الجاهزية الآن هو:
+     - تغطية أيام pilot غير كافية (لسا نافذة 2-4 أسابيع ما اكتملت).
+     - mismatch تاريخي واحد ضمن نفس checksum scope.

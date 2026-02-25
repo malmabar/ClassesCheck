@@ -1766,3 +1766,79 @@
    - `.venv/bin/python -m pytest -q backend/tests/test_responsive_gate_logic.py` ✅ (`3 passed`).
 5. النتيجة:
    - الدفعة المتبقية أصبحت جاهزة للرفع في PR مستقل بدون ملفات artifacts المحلية.
+
+### [W-074] تنفيذ أداة Pilot/Cutover readiness (مرحلة PRD 13.5)
+1. الهدف:
+   - بدء إغلاق المرحلة 4 في PRD (`Pilot & Cutover`) عبر تقرير آلي يقيس:
+     - تغطية أيام التشغيل الفعلية.
+     - تطابق مخرجات التشغيلات المنشورة مع baseline من `SS01.csv`.
+2. التعديلات المنفذة:
+   - إضافة أداة:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/pilot_cutover_report.py`
+   - وظائف الأداة:
+     - سحب التشغيلات من `/api/v1/mc/runs` لكل فترة.
+     - فلترة التشغيلات حسب الحالة (`PUBLISHED` افتراضيًا).
+     - مقارنة كل run مع baseline عبر:
+       - `halls/crns/trainers/distribution`
+     - احتساب `distinct operation days` لكل فترة.
+     - قرار جاهزية نهائي:
+       - `cutover_ready=true/false`
+       - Exit code (`0` جاهز / `1` غير جاهز).
+   - إضافة entrypoint:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/pyproject.toml`
+     - `mc-pilot-cutover-report = "app.tools.pilot_cutover_report:main"`
+   - تحديث التوثيق التشغيلي:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/README.md`
+     - إضافة قسم `Pilot / Cutover Report (PRD Phase 4)` مع أمثلة تشغيل ومخرجات artifacts.
+   - تنظيم workspace:
+     - `/Users/malmabar/Documents/MornningClassesCheck/.gitignore`
+     - إضافة `artifacts/pilot/` لمنع إدراج تقارير pilot المحلية في Git.
+3. الاختبارات:
+   - إضافة:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_pilot_cutover_report_logic.py`
+   - تغطية:
+     - parsing الطابع الزمني.
+     - تطبيع حالات التشغيل.
+     - قرار النجاح/الفشل حسب parity + عدد الأيام.
+4. التحقق المنفذ:
+   - `.venv/bin/python -m ruff check backend/app/tools/pilot_cutover_report.py backend/tests/test_pilot_cutover_report_logic.py backend/pyproject.toml` ✅
+   - `.venv/bin/python -m pytest -q backend/tests/test_pilot_cutover_report_logic.py backend/tests/test_responsive_gate_logic.py` ✅ (`9 passed`).
+5. الأثر:
+   - أصبح لدينا مسار آلي قابل للقياس لإثبات جاهزية الـCutover بدل الحكم اليدوي.
+   - المتبقي لمرحلة 13.5 هو تشغيلها دوريًا على نافذة 2-4 أسابيع وتوقيع الاعتماد النهائي.
+
+### [W-075] تحسين دقة Pilot report عبر input_checksum scoping + تشغيل فعلي
+1. الهدف:
+   - تقليل الـfalse mismatches في تقرير الـPilot الناتجة عن تشغيلات تاريخية لا تخص نفس ملف SS01 الحالي.
+2. التعديلات:
+   - تحديث:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/pilot_cutover_report.py`
+   - إضافة:
+     - حساب `SHA-256` لملف `SS01.csv`.
+     - فلترة التشغيلات افتراضيًا على `run.input_checksum == csv_checksum`.
+     - خيار تحكم:
+       - `--require-input-checksum-match` (افتراضي true)
+       - `--no-require-input-checksum-match`
+     - حقول تقرير إضافية:
+       - `expected_input_checksum`
+       - `total_runs_checksum_scoped`
+       - `checksum_filter_enabled`
+3. الاختبارات:
+   - تحديث:
+     - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_pilot_cutover_report_logic.py`
+   - إضافة تغطية لتصفية checksum.
+4. التحقق:
+   - `.venv/bin/python -m ruff check backend/app/tools/pilot_cutover_report.py backend/tests/test_pilot_cutover_report_logic.py` ✅
+   - `.venv/bin/python -m pytest -q backend/tests/test_pilot_cutover_report_logic.py` ✅ (`7 passed`).
+   - تشغيل فعلي:
+     - `../.venv/bin/python -m app.tools.pilot_cutover_report --csv-file /Users/malmabar/Desktop/TraineeConflicts/SS01.csv --period all --accepted-statuses PUBLISHED --min-distinct-days 14 --output-file /Users/malmabar/Documents/MornningClassesCheck/artifacts/pilot/latest.json`
+5. النتيجة العملية:
+   - قبل checksum scoping:
+     - failures=4, mismatches (صباحي=10, مسائي=11).
+   - بعد checksum scoping:
+     - failures=3
+     - صباحي: `runs=14`, `days=2/14`, `mismatches=1` (run: `7a722ec5-09f9-4f47-a3ee-e1c8e110a970`)
+     - مسائي: `runs=9`, `days=2/14`, `mismatches=0`
+6. أثر التعديل:
+   - التقرير الآن يقيس جودة الـPilot على نفس بيانات الإدخال فعليًا.
+   - بقاء عدم الجاهزية حاليًا منطقي (نقص أيام تشغيل + mismatch تاريخي واحد داخل نفس checksum scope).

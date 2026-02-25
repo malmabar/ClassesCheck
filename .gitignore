@@ -8,6 +8,7 @@ artifacts/exports/
 artifacts/parity/
 artifacts/acceptance/
 artifacts/responsive/
+artifacts/pilot/
 artifacts/*.png
 artifacts/tmp_*.png
 backend/artifacts/parity/

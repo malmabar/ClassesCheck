@@ -30,6 +30,7 @@ dev = [
 
 [project.scripts]
 mc-release-gate = "app.tools.release_readiness_gate:main"
+mc-pilot-cutover-report = "app.tools.pilot_cutover_report:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

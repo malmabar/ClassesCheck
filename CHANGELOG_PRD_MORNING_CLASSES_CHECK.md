@@ -1,5 +1,81 @@
 # CHANGELOG - PRD Morning Classes Check
 
+## v1.70 - 25 فبراير 2026
+
+### الملخص
+تحسين دقة `Pilot/Cutover report` عبر تقييد المقارنة افتراضيًا على تشغيلات تحمل نفس `input_checksum` لملف `SS01.csv` المستخدم في baseline.
+
+### أهم التغييرات
+1. تحديث:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/pilot_cutover_report.py`
+2. إضافة:
+   - حساب `SHA-256` لملف CSV المدخل.
+   - فلترة التشغيلات على `run.input_checksum == csv_checksum` افتراضيًا.
+   - خيارات CLI:
+     - `--require-input-checksum-match` (افتراضي true)
+     - `--no-require-input-checksum-match`
+3. تحديث التقرير ليتضمن:
+   - `expected_input_checksum`
+   - `checksum_filter_enabled`
+   - `total_runs_checksum_scoped`
+4. تحديث الاختبارات:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_pilot_cutover_report_logic.py`
+   - إضافة اختبار checksum filtering.
+5. تحديث دليل التشغيل:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/README.md`
+   - توضيح سلوك checksum الافتراضي وخيار تعطيله.
+
+### التحقق
+1. `.venv/bin/python -m ruff check backend/app/tools/pilot_cutover_report.py backend/tests/test_pilot_cutover_report_logic.py`
+2. `.venv/bin/python -m pytest -q backend/tests/test_pilot_cutover_report_logic.py`
+3. تشغيل فعلي للتقرير على `SS01.csv`.
+
+### الأثر على التنفيذ
+1. انخفاض mismatch التشغيلي من نطاق تاريخي واسع إلى mismatch واحد فقط ضمن نفس baseline.
+2. قرار `cutover_ready` أصبح أكثر عدالة ودقة قبل اعتماد Phase 4.
+
+## v1.69 - 25 فبراير 2026
+
+### الملخص
+بدء إغلاق `PRD Phase 4 (Pilot & Cutover)` عبر أداة آلية تقيس جاهزية الاعتماد النهائي باستخدام parity على التشغيلات المنشورة + تغطية الأيام التشغيلية الفعلية.
+
+### أهم التغييرات
+1. إضافة أداة:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/app/tools/pilot_cutover_report.py`
+2. قدرات الأداة:
+   - سحب التشغيلات من `/api/v1/mc/runs` لكل فترة.
+   - فلترة التشغيلات بالحالات المعتمدة (`PUBLISHED` افتراضيًا).
+   - مقارنة كل run منشور مع baseline من `SS01.csv` عبر:
+     - `halls_rows`
+     - `crns_rows`
+     - `trainers_rows`
+     - `distribution_rows`
+   - حساب `distinct_days_count` لكل فترة.
+   - إخراج قرار نهائي:
+     - `cutover_ready`
+     - `overall_status`
+     - `failures`
+3. إضافة entrypoint:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/pyproject.toml`
+   - `mc-pilot-cutover-report`
+4. إضافة اختبارات منطق القرار:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/tests/test_pilot_cutover_report_logic.py`
+5. تحديث دليل التشغيل:
+   - `/Users/malmabar/Documents/MornningClassesCheck/backend/README.md`
+   - إضافة قسم `Pilot / Cutover Report (PRD Phase 4)`.
+6. تنظيم artifacts:
+   - `/Users/malmabar/Documents/MornningClassesCheck/.gitignore`
+   - إضافة `artifacts/pilot/`.
+
+### التحقق
+1. `.venv/bin/python -m ruff check backend/app/tools/pilot_cutover_report.py backend/tests/test_pilot_cutover_report_logic.py backend/pyproject.toml`
+2. `.venv/bin/python -m pytest -q backend/tests/test_pilot_cutover_report_logic.py backend/tests/test_responsive_gate_logic.py`
+3. النتيجة: `9 passed`.
+
+### الأثر على التنفيذ
+1. أصبح لدينا معيار آلي واضح قبل إعلان الاعتماد الرسمي بدل التقييم اليدوي.
+2. المتبقي لإغلاق Phase 4 هو تشغيل التقرير على نافذة 2-4 أسابيع ثم اعتماد القرار النهائي.
+
 ## v1.68 - 25 فبراير 2026
 
 ### الملخص
